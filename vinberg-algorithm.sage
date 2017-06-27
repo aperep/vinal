@@ -194,3 +194,6 @@ def is_FundPoly(roots):
     return len(roots)>3
 
 vinberg_algorithm(diagonal_matrix(ZZ,[-3,5,1,1]), [1,0,0,0])
+
+
+
