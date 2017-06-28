@@ -144,7 +144,9 @@ def Roots(V, V1, a, k): #k is desired inner square, a is a non-V1 component
 def GetRoot(V, V1, M,W,v0,  roots):
     def IsRoot(v):
         k = v.inner_product(v)
-        if V.are_linearly_dependent(roots+[v,]) and (len(roots) < V.degree()):
+#        if (len(roots) < V.degree()) and V.are_linearly_dependent(roots+[v,]):
+#            return False
+        if V.are_linearly_dependent(roots[:V.degree()-1]+[v,]):
             return False
         return all( (2*v.inner_product(e))%k==0 for e in V.gens() ) and all(v.inner_product(root)<=0 for root in roots)
     En=abs(M.det()/GCD_list(M.adjoint().list()))
