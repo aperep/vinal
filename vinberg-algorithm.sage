@@ -9,6 +9,7 @@ from pprint import pprint
 from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
+import coxiter
 
 from operator import mul, mod
 
@@ -193,7 +194,11 @@ def vinberg_algorithm(M, v0=None): # M is an inner product (quadratic form), v0 
             print 'Roots:', roots
 
 def is_FundPoly(roots):
-    return len(roots)>3
+    if len(roots)<1:
+        return False
+    M = [[ t.inner_product(r) for t in roots] for r in roots]
+    print(M)
+    return coxiter.run(M, len(roots[0]))
 
 vinberg_algorithm(diagonal_matrix(ZZ,[-3,5,1,1]), [1,0,0,0])
 
