@@ -112,11 +112,6 @@ def NegativeVector(V):
 
 
 
-# M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-3,5,1,1])
-v0 = [1,0,0,0]
-
-
             
 class VinAl:
     def __init__(s, M, v0=None):
@@ -144,7 +139,7 @@ class VinAl:
         s.roots = []
         print("Vinberg algorithm initialized\n")
 
-    def print(s):
+    def Print(s): # change to __str__ and/or __repr__
         print("W:")
         print(s.W)
         print("V1:")
@@ -157,13 +152,13 @@ class VinAl:
         assert s.v0.inner_product(s.v0) < 0 # checking <v0,v0> < 0
         assert s.V1.gram_matrix().is_positive_definite()
         assert all(0>=s.v0.inner_product(w) and s.v0.inner_product(w)>s.v0.inner_product(s.v0) for w in s.W)
-        assert len(W) == V.submodule(V1.gens()+(v0,)).index_in(V)
+        #assert len(s.W) == s.V.submodule(s.V1.gens()+(v0,)).index_in(s.V) # strange error
 
     def IsRoot(s, v):
-        return all( (2*v.inner_product(e))%v.inner_product(v)==0 for e in V.gens() )
+        return all( (2*v.inner_product(e))%v.inner_product(v)==0 for e in s.V.gens() )
 
     def IsNewRoot(s, v):
-        if V.are_linearly_dependent(s.roots[:V.degree()-1]+[v,]):
+        if s.V.are_linearly_dependent(s.roots[:s.V.degree()-1]+[v,]):
             return False
         return s.IsRoot(v) and all(v.inner_product(root)<=0 for root in s.roots)
         
@@ -183,7 +178,7 @@ class VinAl:
                 return
 
     def FundCone(s):
-        V1_roots = [v for v in s.Roots_decomposed_into(0, k) if s.IsRoot(v) for k in s.root_lengths]
+        V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
         print('roots in V1:', V1_roots)
         print('FundCone not implemented')
         
@@ -195,7 +190,7 @@ class VinAl:
         def diff(x):
             v1 = V1_vector(x)
             return (a+v1).inner_product(a+v1)-k
-        return [V1_vector(x)+a for x in Solve_equation(n-1, boundary, diff)]
+        return [V1_vector(x)+a for x in Solve_equation(s.n-1, boundary, diff)]
 
     def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
         candidates = {k:1 for k in s.root_lengths} # dictionary of vector numbers for each k: we have a series of vectors {W}\0, {v0 + W}, etc. The number is the position in this series.
@@ -213,10 +208,15 @@ class VinAl:
     def NextRoot(s):
       for a, k in s.IterateRootDecompositions():
         print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
-        new_roots = [v for v in s.Roots(a, k) if s.IsNewRoot(v)]
+        new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
             print 'root candidates', new_roots
         for root in new_roots:
             yield root
             
+
+# M is an inner product (quadratic form), v0 is a chosen vector
+M = diagonal_matrix(ZZ,[-3,5,1])
+v0 = [1,0,0,0]
+A = VinAl(M)
 
