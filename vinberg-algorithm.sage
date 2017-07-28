@@ -161,17 +161,19 @@ class VinAl:
         if s.V.are_linearly_dependent(s.roots[:s.V.degree()-1]+[v,]):
             return False
         return s.IsRoot(v) and all(v.inner_product(root)<=0 for root in s.roots)
+
+
+    def is_FundPoly(s):
+            if len(s.roots)<1:
+                return False
+            M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
+            print(M)
+            return coxiter.run(M, s.n)
         
     def FindRoots(s):
-        def is_FundPoly(roots):
-            if len(roots)<1:
-                return False
-            M = [[ t.inner_product(r) for t in roots] for r in roots]
-            print(M)
-            return coxiter.run(M, len(roots[0]))
-
-        roots = s.FundCone()
+        s.roots = s.FundCone()
         for root in s.NextRoot():
+            s.roots.append(root)
             if s.is_FundPoly():
                 print('Fundamental Polyhedron constructed, roots:')
                 print(s.roots)
@@ -181,6 +183,7 @@ class VinAl:
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
         print('roots in V1:', V1_roots)
         print('FundCone not implemented')
+        return []
         
         
     def Roots_decomposed_into(s, a, k): #k is desired inner square, a is a non-V1 component
