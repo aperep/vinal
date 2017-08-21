@@ -9,8 +9,12 @@ from pprint import pprint
 from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
+
+
+#local imports:
 import coxiter
 
+# taken from https://gist.github.com/sirodoht/ee2abe82eca70f5b1869
 from operator import mul, mod
 
 def egcd(a, b):
@@ -34,12 +38,13 @@ def crt(m, a):
     x = x_sum % M
     return x
 
+
+
 def qform(B):
     C = 2*B
     Q = QuadraticForm(QQ, C)
     return Q
 
-print (3/2)%5
 
 def solve_mod_primes(n,diff,primes):
     def solve_mod_p(n,diff,p):
@@ -71,6 +76,7 @@ def Solve_equation(n, boundary, diff):
     return sols
 
 
+
 def ParallelepipedContains(P,v):#v is a row, P is a matrix with polytope generators as rows
     Q = matrix(v)*P.inverse()
     return all( (c < 1) and (c>=0) for c in Q.list())
@@ -84,6 +90,18 @@ def BoundingBox(vectors):
 def GetIntegerPoints(m):
     return [v for v in BoundingBox(m.rows()) if ParallelepipedContains(m,v)]
 
+
+def ReduceToV1(V1, u, k): # reduces Q(v1+u)=k to Q(v1+u1)=k1, where u1 is in V1
+    E = V1.vector_space()
+    u1 = sum(e.inner_product(u)*eps for (e, eps) in itertools.collate(E.basis(), E.dual_basis()))
+    k1 = k - u.inner_product(u) + u1.inner_product(u1)
+    return u1, k1
+
+
+
+
+
+
 def NegativeVector(V):
     D, T = QuadraticForm(QQ, V.inner_product_matrix()).rational_diagonal_form(True)
     D = D.matrix()
@@ -95,18 +113,109 @@ def NegativeVector(V):
     v0 = v0 / gcd(v0.list())
     return V(v0)
 
-def Get_Iterate_ak():
-    pass
-#
 
-def IterateDecompositions(kroot_lengths,  W, v0, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
-    #print kroot_lengths
-        candidates = {k:0 for k in kroot_lengths} # dictionary of vector numbers for each k: we have a series of vectors {W}, {v0 + W}, etc. The number is the position in this series.
+
+
+
+            
+class VinAl:
+    def __init__(s, M, v0=None):
+        s.M = M
+        s.n = s.M.ncols()  # n-1 = dimension of hyperbolic space
+        s.V = FreeModule(ZZ,s.n, inner_product_matrix=s.M) # created a quadratic lattice
+        if v0 is None:
+            s.v0 = NegativeVector(s.V)
+        else:
+            assert s.n == len(v0)
+            s.v0 = s.V(v0)
+            
+        s.V1 = s.V.submodule(matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel()) # V1 = <v0>^\perp
+        s.M1 = s.V1.gram_matrix()
+        s.mu = (sorted(s.M1.eigenvalues()))[0]
+        
+        s.W=[s.V(w) for w in GetIntegerPoints(s.V1.matrix().insert_row(s.n-1, s.v0))] # w_1..w_m
+        s.W.sort(key = lambda x: -s.v0.inner_product(x))
+
+        s.En=abs(s.M.det()/GCD_list(s.M.adjoint().list()))
+        s.root_lengths = [k for k in range(1,2*s.En+1) if ((2*s.En)%k == 0)]
+
+        #print([v0.inner_product(w) for w in W])
+        s.check_validity()
+        s.roots = []
+        print("Vinberg algorithm initialized\n")
+
+    def Print(s): # change to __str__ and/or __repr__
+        print("W:")
+        print(s.W)
+        print("V1:")
+        print(s.V1.vector_space())
+        print(s.V1.gram_matrix())
+        
+    def check_validity(s):
+        assert s.M.is_square()
+        assert s.M.is_symmetric()
+        assert s.v0.inner_product(s.v0) < 0 # checking <v0,v0> < 0
+        assert s.V1.gram_matrix().is_positive_definite()
+        assert all(0>=s.v0.inner_product(w) and s.v0.inner_product(w)>s.v0.inner_product(s.v0) for w in s.W)
+        #assert len(s.W) == s.V.submodule(s.V1.gens()+(v0,)).index_in(s.V) # strange error
+
+    def IsRoot(s, v):
+        return all( (2*v.inner_product(e))%v.inner_product(v)==0 for e in s.V.gens() )
+
+    def IsNewRoot(s, v):
+        if s.V.are_linearly_dependent(s.roots[:s.V.degree()-1]+[v,]):
+            return False
+        return s.IsRoot(v) and all(v.inner_product(root)<=0 for root in s.roots)
+
+
+    def is_FundPoly(s):
+            if len(s.roots)<1:
+                return False
+            M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
+            print(M)
+            return coxiter.run(M, s.n)
+        
+    def FindRoots(s):
+        s.roots = s.FundCone()
+        for root in s.NextRoot():
+            s.roots.append(root)
+            if s.is_FundPoly():
+                print('Fundamental Polyhedron constructed, roots:')
+                print(s.roots)
+                return
+
+    def FundCone(s):
+        V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
+        print('roots in V1:', V1_roots)
+        cone = Cone([[0]*s.n]).dual()
+        print('cone', cone.rays())
+        for root in V1_roots:
+            halfplane = Cone([root]).dual()
+            print('halfplane', halfplane.rays())
+            if cone.intersection(halfplane).dim() == s.n:
+                cone = cone.intersection(halfplane)
+            else:
+                cone = cone.intersection(Cone([-root]).dual())
+            print('cone', cone.rays())
+        print('FundCone returned')
+        return cone
+        
+        
+    def Roots_decomposed_into(s, a, k): #k is desired inner square, a is a non-V1 component
+        boundary = round(sqrt(k/s.mu))+max(abs(a[i]) for i in range(s.n))
+        def V1_vector(x):
+            return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
+        def diff(x):
+            v1 = V1_vector(x)
+            return (a+v1).inner_product(a+v1)-k
+        return [V1_vector(x)+a for x in Solve_equation(s.n-1, boundary, diff)]
+
+    def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
+        candidates = {k:1 for k in s.root_lengths} # dictionary of vector numbers for each k: we have a series of vectors {W}\0, {v0 + W}, etc. The number is the position in this series.
         def cand_a(n): # the non-V1 component of vector under number n
-            return W[n%len(W)]+ (n//len(W))*v0
-
+            return s.W[n%len(s.W)]+ (n//len(s.W))*s.v0
         while True:
-            k = min(kroot_lengths, key=lambda k: -v0.inner_product(cand_a(candidates[k]))/math.sqrt(k)) # can be optimized with heapq
+            k = min(s.root_lengths, key=lambda k: -s.v0.inner_product(cand_a(candidates[k]))/math.sqrt(k)) # can be optimized with heapq
             #print 'IterateDecompositions returns ', cand_a(candidates[k]), k
             yield cand_a(candidates[k]), k
             candidates[k]+=1
@@ -114,93 +223,18 @@ def IterateDecompositions(kroot_lengths,  W, v0, stop=-1): # iterates pairs (w_i
             if stop == 0:
                 return
 
-def ReduceToV1(V1, u, k): # reduces Q(v1+u)=k to Q(v1+u1)=k1, where u1 is in V1
-    E = V1.vector_space()
-    u1 = sum(e.inner_product(u)*eps for (e, eps) in itertools.collate(E.basis(), E.dual_basis()))
-    k1 = k - u.inner_product(u) + u1.inner_product(u1)
-    return u1, k1
-
-def v1Box(u1, k1): # get bounding box for v1
-    pass
-
-def Roots(V, V1, a, k): #k is desired inner square, a is a non-V1 component
-    M1 = V1.gram_matrix()
-    #print M1
-    n = V1.degree()
-    #print('n',n)
-    mu = (sorted(M1.eigenvalues()))[0]
-    boundary = round(sqrt(k/mu))+max(abs(a[i]) for i in range(n))
-    def V1_vector(x):
-        return sum(x[i]*V1.gens()[i] for i in range(n-1))
-    def diff(x):
-        v1 = V1_vector(x)
-        #print('v1', x, v1)
-        #print(v1, a)
-        return (a+v1).inner_product(a+v1)-k
-    return [V1_vector(x)+a for x in Solve_equation(n-1, boundary, diff)]
-#return (V1(v) for v in BoundingBox([a*k for a in V1.gens()]+[-a*k for a in V1.gens()]) if check(v))
-# google quadraticform .short_primitive_vector_list_up_to_length, .solve(k), .vectors_by_length
-# modulo p reduction!
-
-def GetRoot(V, V1, M,W,v0,  roots):
-    def IsRoot(v):
-        k = v.inner_product(v)
-#        if (len(roots) < V.degree()) and V.are_linearly_dependent(roots+[v,]):
-#            return False
-        if V.are_linearly_dependent(roots[:V.degree()-1]+[v,]):
-            return False
-        return all( (2*v.inner_product(e))%k==0 for e in V.gens() ) and all(v.inner_product(root)<=0 for root in roots)
-    En=abs(M.det()/GCD_list(M.adjoint().list()))
-    kroot_lengths = [k for k in range(1,2*En+1) if ((2*En)%k == 0)]
-    for a, k in IterateDecompositions(kroot_lengths, W, v0):
-        print(a, k, -a.inner_product(v0)/math.sqrt(k))
-        #print 'solutions', Roots(V, V1, a, k)
-        new_roots = [v for v in Roots(V, V1, a, k) if IsRoot(v)]
+    def NextRoot(s):
+      for a, k in s.IterateRootDecompositions():
+        print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
+        new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
             print 'root candidates', new_roots
-            return new_roots[0]
+        for root in new_roots:
+            yield root
+            
 
-
-
-def vinberg_algorithm(M, v0=None): # M is an inner product (quadratic form), v0 is a chosen vector
-        #pprint("Vinberg algorithm started\n")
-        print("Vinberg algorithm started\n")
-        assert M.is_square()
-        assert M.is_symmetric()
-        n = M.ncols()  # n-1 = dimension of hyperbolic space
-        V = FreeModule(ZZ,n, inner_product_matrix=M) # created a quadratic lattice
-        if v0 is None:
-            v0 = NegativeVector(V)
-        else:
-            assert n == len(v0)
-            v0 = V(v0)
-        assert v0.inner_product(v0) < 0 # checking <v0,v0> < 0
-        V1 = V.submodule(matrix([v0.dot_product(m) for m in M.columns()]).right_kernel()) # V1 = <v0>^\perp
-        assert V1.gram_matrix().is_positive_definite()
-        print(V1.gram_matrix())
-        W=[V(w) for w in GetIntegerPoints(V1.matrix().insert_row(n-1, v0))] # w_1..w_m
-        W.sort(key = lambda x: -v0.inner_product(x))
-        print("W:")
-        print(W)
-        #print([v0.inner_product(w) for w in W])
-        Vprime=V.submodule(V1.gens()+(v0,)) # V'= V1 + <v0>
-        assert len(W) == Vprime.index_in(V)
-        assert all(0>=v0.inner_product(w) and v0.inner_product(w)>v0.inner_product(v0) for w in W)
-        print("V1:")
-        print(V1.vector_space())
-        roots = []
-        while not is_FundPoly(roots):
-            roots.append(GetRoot(V,V1,M,W,v0, roots))
-            print 'Roots:', roots
-
-def is_FundPoly(roots):
-    if len(roots)<1:
-        return False
-    M = [[ t.inner_product(r) for t in roots] for r in roots]
-    print(M)
-    return coxiter.run(M, len(roots[0]))
-
-vinberg_algorithm(diagonal_matrix(ZZ,[-3,5,1,1]), [1,0,0,0])
-
-
+# M is an inner product (quadratic form), v0 is a chosen vector
+M = diagonal_matrix(ZZ,[-1,1,1])
+v0 = [1,0,0,0]
+A = VinAl(M)
 
