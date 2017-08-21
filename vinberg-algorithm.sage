@@ -10,24 +10,10 @@ from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
 
-import time
-
-def timeit(f):
-    
-    def timed(*args, **kw):
-        
-        ts = time.time()
-        result = f(*args, **kw)
-        te = time.time()
-        
-        print 'func:%r args:[%r, %r] took: %2.4f sec' % \
-            (f.__name__, args, kw, te-ts)
-        return result
-    
-    return timed
 
 
 #local imports:
+from profiling_decorators import *
 import coxiter
 
 # taken from https://gist.github.com/sirodoht/ee2abe82eca70f5b1869
