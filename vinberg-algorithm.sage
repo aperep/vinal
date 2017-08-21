@@ -10,6 +10,22 @@ from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
 
+import time
+
+def timeit(f):
+    
+    def timed(*args, **kw):
+        
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+        
+        print 'func:%r args:[%r, %r] took: %2.4f sec' % \
+            (f.__name__, args, kw, te-ts)
+        return result
+    
+    return timed
+
 
 #local imports:
 import coxiter
@@ -45,7 +61,7 @@ def qform(B):
     Q = QuadraticForm(QQ, C)
     return Q
 
-
+@timeit
 def solve_mod_primes(n,diff,primes):
     def solve_mod_p(n,diff,p):
         Box = itertools.product(*[range(p) for i in range(n)])
@@ -174,7 +190,8 @@ class VinAl:
             M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
             print(M)
             return coxiter.run(M, s.n)
-        
+    
+    @timeit
     def FindRoots(s):
         s.roots = s.FundCone()
         for root in s.NextRoot():
