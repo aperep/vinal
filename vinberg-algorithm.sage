@@ -13,7 +13,31 @@ import sympy
 
 #local imports:
 import coxiter
-import chinese
+
+# taken from https://gist.github.com/sirodoht/ee2abe82eca70f5b1869
+from operator import mul, mod
+
+def egcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = egcd(b % a, a)
+        return (g, x - (b // a) * y, y)
+
+
+def crt(m, a):
+    M = reduce(mul, m) # the product of m elements
+    m_i = [M / item for item in m]
+    b = map(mod, m_i, m)
+    g, k, l = map(egcd, b, m)
+    g, k, l = zip(g, k, l) # transpose g, k and l arrays
+    t = map(mod, k, m)
+    e = map(mul, m_i, t)
+    
+    x_sum = sum(map(mul, a, e))
+    x = x_sum % M
+    return x
+
 
 
 def qform(B):
@@ -164,14 +188,15 @@ class VinAl:
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
         print('roots in V1:', V1_roots)
         cone = Cone([[0]*s.n]).dual()
-        print(cone)
+        print('cone', cone.rays())
         for root in V1_roots:
-            halfplane = Cone(root).dual()
-            print(halfplane)
-            if cone.intersection(halfplane).dim() == n:
+            halfplane = Cone([root]).dual()
+            print('halfplane', halfplane.rays())
+            if cone.intersection(halfplane).dim() == s.n:
                 cone = cone.intersection(halfplane)
             else:
-                cone = cone.intersection(Cone(-root).dual())
+                cone = cone.intersection(Cone([-root]).dual())
+            print('cone', cone.rays())
         print('FundCone returned')
         return cone
         
@@ -209,7 +234,7 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-3,5,1])
+M = diagonal_matrix(ZZ,[-1,1,1])
 v0 = [1,0,0,0]
 A = VinAl(M)
 
