@@ -188,17 +188,17 @@ class VinAl:
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
         print('roots in V1:', V1_roots)
         cone = Cone([[0]*s.n]).dual()
-        print('cone', cone.rays())
+        #print('cone', cone.rays())
         for root in V1_roots:
             halfplane = Cone([root]).dual()
-            print('halfplane', halfplane.rays())
+            #print('halfplane', halfplane.rays())
             if cone.intersection(halfplane).dim() == s.n:
                 cone = cone.intersection(halfplane)
             else:
                 cone = cone.intersection(Cone([-root]).dual())
-            print('cone', cone.rays())
+        #print('cone', cone.rays())
         print('FundCone returned')
-        return cone
+        return [s.V(r) for r in cone.dual().rays()]
         
         
     def Roots_decomposed_into(s, a, k): #k is desired inner square, a is a non-V1 component
@@ -237,4 +237,3 @@ class VinAl:
 M = diagonal_matrix(ZZ,[-1,1,1])
 v0 = [1,0,0,0]
 A = VinAl(M)
-

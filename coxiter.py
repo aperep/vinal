@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import division
 from subprocess import call
-
 
 def gram_matrix2graph(M, d):
     def weight(M, i, j):
@@ -19,14 +19,15 @@ def gram_matrix2graph(M, d):
         if cos2 > 1:
             return 1
         else:
+            print('coxiter.py ERROR: cosine ', cos2)
             return -1
 
     n = len(M)
-    strings = ['{0} {1}\n'.format(n,d),]
+    strings = ['{0} {1}\n'.format(n,d-1),]
     for i in range(n):
         for j in range(i):
             if M[i][j] != 0:
-                strings.append('{0} {1} {2}'.format(j+1, i+1, weight(M,i,j) ))
+                strings.append('{0} {1} {2}\n'.format(j+1, i+1, weight(M,i,j) ))
     strings.append('\n')
     print(strings)
     return strings
