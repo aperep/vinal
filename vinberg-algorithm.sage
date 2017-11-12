@@ -146,7 +146,7 @@ class VinAl:
         c = int(k - a.inner_product(a))
         solutions = qsolve.qsolve(m2, int(2)*m1, -c, boundary)
         def V1_vector(x):
-            return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
+            return sum(x[i].item()*s.V1.gens()[i] for i in range(s.n-1))
         return [V1_vector(x)+a for x in solutions]
 
     def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
@@ -173,7 +173,7 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-2,1,1,1])
+M = diagonal_matrix(ZZ,[-3,5,1,1])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)

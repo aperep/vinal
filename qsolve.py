@@ -43,6 +43,7 @@ def vectors_multiply(vectors, primes):
 
 
 def qsolve(m2, m1, c, boundary=None):
+    #print("qsolve with arguments", m2, m1, c)
     if boundary == None:
         raise NotImplementedError
     n = len(m2)
@@ -52,7 +53,7 @@ def qsolve(m2, m1, c, boundary=None):
 
     def diff(x):
         x1 = np.dot(x, m2)
-        ans2 = np.dot(x1+m1, x) - c
+        ans2 = np.dot(x1+m1, x) + c
         #print(type(ans2))
         return int(ans2)
 
@@ -79,6 +80,6 @@ def qsolve(m2, m1, c, boundary=None):
 
 
 if __name__ == "__main__":
-    test = qsolve([[2,1],[1,2]], [0,0], 2, 10)
+    test = qsolve([[1,0,0],[0,1,0],[0,0,1]], [0,0,0], 9, 10)
     for t in test:
         print(t)
