@@ -9,7 +9,7 @@ from pprint import pprint
 from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
-import numba
+#import numba
 
 
 #local imports:
@@ -145,7 +145,7 @@ class VinAl:
         #print([v0.inner_product(w) for w in W])
         s.check_validity()
         s.roots = []
-        print("Vinberg algorithm initialized for matrix \n\n{}".format(M))
+        print("Vinberg algorithm initialized for matrix \n{}\n".format(M))
 
     def Print(s): # change to __str__ and/or __repr__
         print("W:")
@@ -218,11 +218,13 @@ class VinAl:
         g = Matrix(s.V1.gens()) 
         m1 = np.dot( np.dot(g, M), g.transpose())
         m2 = np.dot( np.dot( Matrix(a), M), g.transpose() )
-        c = k - a.inner_product(a)
+        c = int(k - a.inner_product(a))
+        #@numba.jit(nopython=True)
         def diff(x):
             x1 = np.dot(x, m1)
-            ans2 = np.dot(x1+2*m2, x) - c
+            ans2 = np.dot(x1+m2+m2, x) - c
             return ans2
+            
         def V1_vector(x):
             return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
         return [V1_vector(x)+a for x in Solve_equation(s.n-1, boundary, diff)]
@@ -251,7 +253,7 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-1,1,1,1])
+M = diagonal_matrix(ZZ,[-3,1,1,1])
 #v0 = [1,0,0,0]
-print('\ninitializing a VinAl instance at a variable "A"\n')
+print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)
