@@ -9,7 +9,7 @@ from pprint import pprint
 from sage.quadratic_forms.qfsolve import qfsolve, qfparam
 from sympy.solvers.diophantine import *
 import sympy
-
+import numba
 
 
 #local imports:
@@ -18,6 +18,7 @@ import coxiter
 
 # taken from https://gist.github.com/sirodoht/ee2abe82eca70f5b1869
 from operator import mul, mod
+
 
 def egcd(a, b):
     if a == 0:
@@ -47,7 +48,7 @@ def qform(B):
     Q = QuadraticForm(QQ, C)
     return Q
 
-@timeit
+#@timeit
 def solve_mod_primes(n,diff,primes):
     def solve_mod_p(n,diff,p):
         Box = itertools.product(*[range(p) for i in range(n)])
@@ -144,7 +145,7 @@ class VinAl:
         #print([v0.inner_product(w) for w in W])
         s.check_validity()
         s.roots = []
-        print("Vinberg algorithm initialized\n")
+        print("Vinberg algorithm initialized for matrix \n\n{}".format(M))
 
     def Print(s): # change to __str__ and/or __repr__
         print("W:")
@@ -202,15 +203,28 @@ class VinAl:
         #print('cone', cone.rays())
         print('FundCone returned')
         return [s.V(r) for r in cone.dual().rays()]
+    
         
         
     def Roots_decomposed_into(s, a, k): #k is desired inner square, a is a non-V1 component
+        '''
+        Here we solve the equation (a+v1, a+v1) == k for a vector v1 in V1.
+        We take a vector x in the basis g of V1, so v1 = g.x, and expand the equation to the form
+        ( 2 a M g  + x^t g^t M g ) x == k - a M a^t,
+        or, introducing m1, m2, c:
+        ( 2 m2 + x^t m1 ) x == c.
+        '''
         boundary = round(sqrt(k/s.mu))+max(abs(a[i]) for i in range(s.n))
+        g = Matrix(s.V1.gens()) 
+        m1 = np.dot( np.dot(g, M), g.transpose())
+        m2 = np.dot( np.dot( Matrix(a), M), g.transpose() )
+        c = k - a.inner_product(a)
+        def diff(x):
+            x1 = np.dot(x, m1)
+            ans2 = np.dot(x1+2*m2, x) - c
+            return ans2
         def V1_vector(x):
             return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
-        def diff(x):
-            v1 = V1_vector(x)
-            return (a+v1).inner_product(a+v1)-k
         return [V1_vector(x)+a for x in Solve_equation(s.n-1, boundary, diff)]
 
     def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
@@ -237,6 +251,7 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-1,1,1])
-v0 = [1,0,0,0]
+M = diagonal_matrix(ZZ,[-1,1,1,1])
+#v0 = [1,0,0,0]
+print('\ninitializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)
