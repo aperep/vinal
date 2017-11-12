@@ -7,101 +7,26 @@ from pprint import pprint
 #from heapq import heapify, heappush, heappop
 
 from sage.quadratic_forms.qfsolve import qfsolve, qfparam
-from sympy.solvers.diophantine import *
-import sympy
-#import numba
+#from sympy.solvers.diophantine import *
+#import sympy
 
 
 #local imports:
 from profiling_decorators import *
+import qsolve
 import coxiter
 
-# taken from https://gist.github.com/sirodoht/ee2abe82eca70f5b1869
-from operator import mul, mod
 
-
-def egcd(a, b):
-    if a == 0:
-        return (b, 0, 1)
-    else:
-        g, y, x = egcd(b % a, a)
-        return (g, x - (b // a) * y, y)
-
-
-def crt(m, a):
-    M = reduce(mul, m) # the product of m elements
-    m_i = [M / item for item in m]
-    b = map(mod, m_i, m)
-    g, k, l = map(egcd, b, m)
-    g, k, l = zip(g, k, l) # transpose g, k and l arrays
-    t = map(mod, k, m)
-    e = map(mul, m_i, t)
-    
-    x_sum = sum(map(mul, a, e))
-    x = x_sum % M
-    return x
-
-
-
-def qform(B):
-    C = 2*B
-    Q = QuadraticForm(QQ, C)
-    return Q
-
-#@timeit
-def solve_mod_primes(n,diff,primes):
-    def solve_mod_p(n,diff,p):
-        Box = itertools.product(*[range(p) for i in range(n)])
-        return [x for x in Box if diff(x)%p == 0]
-    
-    def vectors_multiply(vectors, primes):
-        n = len(vectors[0])
-        return tuple(crt(primes,[v[i] for v in vectors]) for i in range(n))
-    sols_mod_primes = [solve_mod_p(n,diff,p) for p in primes]
-    sol_combinations = [i for i in itertools.product(*sols_mod_primes)]
-    merged_solutions = set([ vectors_multiply(sol, primes) for sol in sol_combinations]) # need to filter repeated vectors
-    modulus = prod(primes) # m=modulus; plan: rebalance to [-m/2..m/2], iterate y over Box/m and look for Q(my+x)=k. Filter y's somehow.
-    return merged_solutions, modulus
-
-def define_primes(boundary):
-    return [2,3,5]
-
-def Solve_equation(n, boundary, diff):
-    remainders, modulus = solve_mod_primes(n,diff, define_primes(boundary))
-    boundary = round(boundary/modulus) + 1
-    BOX = itertools.product(*[range(-boundary,boundary) for i in range(n)])
-    sols = []
-    for y in BOX:
-        for x in remainders:
-            v = vector(y)*modulus+vector(x)
-            if (diff(v) == 0):
-                sols.append(v)
-    return sols
-
-
-
-def ParallelepipedContains(P,v):#v is a row, P is a matrix with polytope generators as rows
-    Q = matrix(v)*P.inverse()
-    return all( (c < 1) and (c>=0) for c in Q.list())
-
-def BoundingBox(vectors):
-    n = len(vectors[0])
-    negative = [sum(v[i] for v in vectors if v[i]<0) for i in range(n)]
-    positive = [sum(v[i] for v in vectors if v[i]>0) for i in range(n)]
-    return itertools.product(*[range(negative[i],positive[i]+1) for i in range(len(negative))])
 
 def GetIntegerPoints(m):
-    return [v for v in BoundingBox(m.rows()) if ParallelepipedContains(m,v)]
-
-
-def ReduceToV1(V1, u, k): # reduces Q(v1+u)=k to Q(v1+u1)=k1, where u1 is in V1
-    E = V1.vector_space()
-    u1 = sum(e.inner_product(u)*eps for (e, eps) in itertools.collate(E.basis(), E.dual_basis()))
-    k1 = k - u.inner_product(u) + u1.inner_product(u1)
-    return u1, k1
-
-
-
+    n = len(m.rows()[0])
+    negative = [sum(v[i] for v in m.rows() if v[i]<0) for i in range(n)]
+    positive = [sum(v[i] for v in m.rows() if v[i]>0) for i in range(n)]
+    BoundingBox = itertools.product(*[range(negative[i],positive[i]+1) for i in range(len(negative))])
+    def ParallelepipedContains(v):#v is a row, m is a matrix with polytope generators as rows
+        Q = matrix(v)*m.inverse()
+        return all( (c < 1) and (c>=0) for c in Q.list())
+    return [v for v in BoundingBox if ParallelepipedContains(v)]
 
 
 
@@ -212,22 +137,17 @@ class VinAl:
         We take a vector x in the basis g of V1, so v1 = g.x, and expand the equation to the form
         ( 2 a M g  + x^t g^t M g ) x == k - a M a^t,
         or, introducing m1, m2, c:
-        ( 2 m2 + x^t m1 ) x == c.
+        ( 2 m1 + x^t m2 ) x == c.
         '''
         boundary = round(sqrt(k/s.mu))+max(abs(a[i]) for i in range(s.n))
         g = Matrix(s.V1.gens()) 
-        m1 = np.dot( np.dot(g, M), g.transpose())
-        m2 = np.dot( np.dot( Matrix(a), M), g.transpose() )
+        m2 = np.dot( np.dot(g, M), g.transpose())
+        m1 = np.dot( np.dot( Matrix(a), M), g.transpose() )
         c = int(k - a.inner_product(a))
-        #@numba.jit(nopython=True)
-        def diff(x):
-            x1 = np.dot(x, m1)
-            ans2 = np.dot(x1+m2+m2, x) - c
-            return ans2
-            
+        solutions = qsolve.qsolve(m2, int(2)*m1, -c, boundary)
         def V1_vector(x):
             return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
-        return [V1_vector(x)+a for x in Solve_equation(s.n-1, boundary, diff)]
+        return [V1_vector(x)+a for x in solutions]
 
     def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
         candidates = {k:1 for k in s.root_lengths} # dictionary of vector numbers for each k: we have a series of vectors {W}\0, {v0 + W}, etc. The number is the position in this series.
@@ -253,7 +173,8 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-3,1,1,1])
+M = diagonal_matrix(ZZ,[-2,1,1,1])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)
+A.FindRoots()
