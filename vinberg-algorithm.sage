@@ -60,6 +60,7 @@ class VinAl:
         s.V1 = s.V.submodule(matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel()) # V1 = <v0>^\perp
         s.M1 = s.V1.gram_matrix()
         s.mu = (sorted(s.M1.eigenvalues()))[0]
+        print 'mu =',s.mu
         
         s.W=[s.V(w) for w in GetIntegerPoints(s.V1.matrix().insert_row(s.n-1, s.v0))] # w_1..w_m
         s.W.sort(key = lambda x: -s.v0.inner_product(x))
@@ -126,7 +127,7 @@ class VinAl:
             else:
                 cone = cone.intersection(Cone([-root]).dual())
         #print('cone', cone.rays())
-        print('FundCone returned')
+        print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
         return [s.V(r) for r in cone.dual().rays()]
     
         
@@ -146,7 +147,7 @@ class VinAl:
         c = int(k - a.inner_product(a))
         solutions = qsolve.qsolve(m2, int(2)*m1, -c, boundary)
         def V1_vector(x):
-            return sum(x[i].item()*s.V1.gens()[i] for i in range(s.n-1))
+            return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
         return [V1_vector(x)+a for x in solutions]
 
     def IterateRootDecompositions(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times
@@ -164,7 +165,7 @@ class VinAl:
 
     def NextRoot(s):
       for a, k in s.IterateRootDecompositions():
-        print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
+          #print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
         new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
             print 'root candidates', new_roots
@@ -173,7 +174,10 @@ class VinAl:
             
 
 # M is an inner product (quadratic form), v0 is a chosen vector
-M = diagonal_matrix(ZZ,[-3,5,1,1])
+#M = diagonal_matrix(ZZ,[-60,1,1,1])
+M = matrix([[-10,0,0,0],[0,2,-1,0],[0,-1,2,0],[0,0,0,1]])
+#M = diagonal_matrix(ZZ,[-3,5,1,1])
+#M = diagonal_matrix(ZZ,[-1,3,3,2])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)

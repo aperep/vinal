@@ -33,9 +33,12 @@ def qsolve_iterative(m2, m1, c, boundary):
         disc = b*b-4*a*c
         if disc<0:
             return 0, None
+        if disc==0:
+            x = int((-b)//(2*a))
+            return (1, [[x,],]) if a*x*x+b*x+c==0 else (0, None)
         disc = round(math.sqrt(disc))
-        x1 = (-b+disc)//(2*a)
-        x2 = (-b-disc)//(2*a)
+        x1 = int((-b+disc)//(2*a))
+        x2 = int((-b-disc)//(2*a))
         sols = [[x,] for x in (x1,x2) if a*x*x+b*x+c==0]
         return len(sols), sols
     def M2(a):
@@ -52,14 +55,14 @@ def qsolve_iterative(m2, m1, c, boundary):
         solnum, sols_a = qsolve_iterative(M2(a), M1(a), C(a), boundary)
         if solnum>0:
             sols+=[s + [a,] for s in sols_a]
-    print(sols)
+#print(sols)
     return len(sols), sols
 
-@timeit
+#@timeit
 def qsolve(m2, m1, c, boundary):
-    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)
-    print(s)
-    return s[1]
+    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)[1]
+    #print(s)
+    return s
 
 
 
