@@ -51,11 +51,15 @@ def qsolve_iterative(m2, m1, c, boundary):
     for a in range(-boundary, boundary+1):
         solnum, sols_a = qsolve_iterative(M2(a), M1(a), C(a), boundary)
         if solnum>0:
-            sols.append([s + [a,] for s in sols_a])
-#print(sols)
-    return len(sols), sum(sols)
-        
-qsolve = timeit(qsolve_iterative)
+            sols+=[s + [a,] for s in sols_a]
+    print(sols)
+    return len(sols), sols
+
+@timeit
+def qsolve(m2, m1, c, boundary):
+    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)
+    print(s)
+    return s[1]
 
 
 
