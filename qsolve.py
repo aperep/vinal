@@ -40,6 +40,18 @@ def vectors_multiply(vectors, primes):
         n = len(vectors[0])
         return tuple(crt(primes,[v[i] for v in vectors]) for i in range(n))
 
+def qsolve_iterative(m2, m1, c, boundary):
+    n = len(m2)
+    if n==1:
+        a=m2[0,0]
+        b=m1[0]
+        disc = math.round(sqrt(b*b-4*a*c))
+        x1 = (-b+disc)//(2*a)
+        x2 = (-b-disc)//(2*a)
+        return [[x,] for x in (x1,x2) if a*x*x+b*x+c==0]
+                
+    return sum([[sol+[a] for sol in qsolve_iterative(m2[:n-1,:n-1], m1[:n-1]+a*m2[n,:n-1]+a*m2[:n-1,n], m2[n,n]*a*a+m1[n]*a+ c)] for a in range(-boundary, boundary+1)])
+        
 
 
 def qsolve(m2, m1, c, boundary=None):
