@@ -25,23 +25,31 @@ Optional parameter 'boundary' restricts solutions to the cube |x_1|, .. |x_n| < 
 If 'boundary' is present, then M2 can be arbitrary.
 '''
 
-# finds x that minimizes Q = x^T.m1.x + m2.x, see http://komarix.org/ac/papers/thesis/thesis_html/node11.html
-def qform_minimum(m2, m1):
-  n=len(m2)
+# finds x that minimizes Q = x^T.m2.x + m1.x, see http://komarix.org/ac/papers/thesis/thesis_html/node11.html
+def qform_minimum(A, m1):
+  b=-.5*m1
+  n=len(A)
   x=np.zeros(n)
-  d=np.zeros(n)
-  r=np.copy(m1)
-  r_prev=r
+  d=np.copy(b)
+  r=np.copy(b)
+  r_prev=None
   beta=0
   alpha=0
-  while r.dot(r)>0:
+  i=0
+  #print('solving qform A', A,b)
+  while r.dot(r)>0.1:
+    beta  = np.dot(r,r)/np.dot(r_prev,r_prev) if r_prev!=None else 0
     d     = r+beta*d
-    alpha =-np.dot(d,b)/np.dot(d,(np.dot(A,d)))
+    alpha =-np.dot(r,r)/r.dot(np.dot(A,r))
     x     = x-alpha*d
     r_prev= r
     r     = b-np.dot(A,x)
-    beta  = np.dot(r,r)/np.dot(r_prev,r_prev)
-  return x, np.dot(x,np.dot(m2,x))+np.dot(m1,x)
+    #print('solving qform', i, alpha, beta, d, r, x, r_prev)
+    i+=1
+    if i>n:
+      return
+  return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
+
 
 def qsolve_iterative(m2, m1, c, boundary):
     n = len(m2)
@@ -50,46 +58,47 @@ def qsolve_iterative(m2, m1, c, boundary):
         b=m1[0]
         disc = b*b-4*a*c
         if disc<0:
-            return 0, None
+            return None
         if disc==0:
             x = int((-b)//(2*a))
-            return (1, [[x,],]) if a*x*x+b*x+c==0 else (0, [])
+            return [[x,],] if a*x*x+b*x+c==0 else []
         disc = round(math.sqrt(disc))
         x1 = int((-b+disc)//(2*a))
         x2 = int((-b-disc)//(2*a))
         sols = [[x,] for x in (x1,x2) if a*x*x+b*x+c==0]
-        return len(sols), sols
+        return sols
 
     x, val = qform_minimum(m2,m1)
-    print(m2, m1, c, x, val)
+    #print(m2, m1, c, x, val)
     if val>-c+.1:
-      return 0, None
+      return None
     
     def M2(a):
         return m2[:n-1,:n-1]
     def M1(a):
-        #print(m1[:n-1].shape)
-        #print(m2[n-1,:n-1].shape)
-        #print(m2[:n-1,n-1].shape)
         return m1[:n-1]+a*m2[n-1,:n-1]+a*m2[:n-1,n-1]
     def C(a):
         return m2[n-1,n-1]*a*a+m1[n-1]*a + c
     def oneside(a, direction):
+        a=int(a)
         sols=[]
         sols_a = []
         while sols_a!=None:
+          #print 'trying a=',a
+          sols_a = qsolve_iterative(M2(a), M1(a), C(a), boundary)
+          if sols_a==None:
+            break
           sols+=[s + [a,] for s in sols_a]
-          solnum, sols_a = qsolve_iterative(M2(a), M1(a), C(a), boundary)
+          #print 'solutions', sols_a
           a+=direction
         return sols
     
     sols=oneside(math.floor(x[n-1]),-1)+oneside(math.floor(x[n-1])+1,1)
-    return len(sols), sols
+    return sols
 
 #@timeit
 def qsolve(m2, m1, c, boundary):
-    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)[1]
-    #print(s)
+    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)
     return s
 
 
@@ -100,4 +109,4 @@ if __name__ == "__main__":
              ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], -9, 10),
     ]
     for m2, m1, c, b in tests:
-        print(qsolve(m2, m1, c, b))
+        print(timeit(qsolve)(m2, m1, c, b))
