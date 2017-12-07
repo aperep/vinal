@@ -61,8 +61,8 @@ def qsolve_iterative(m2, m1, c, boundary):
         return len(sols), sols
 
     x, val = qform_minimum(m2,m1)
-    print(val)
-    if val>-c:
+    print(m2, m1, c, x, val)
+    if val>-c+.1:
       return 0, None
     
     def M2(a):
@@ -83,10 +83,10 @@ def qsolve_iterative(m2, m1, c, boundary):
           a+=direction
         return sols
     
-    sols=oneside(math.floor(x[n]),-1)+oneside(math.floor(x[n])+1,1)
+    sols=oneside(math.floor(x[n-1]),-1)+oneside(math.floor(x[n-1])+1,1)
     return len(sols), sols
 
-@timeit
+#@timeit
 def qsolve(m2, m1, c, boundary):
     s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)[1]
     #print(s)
@@ -97,7 +97,7 @@ def qsolve(m2, m1, c, boundary):
 if __name__ == "__main__":
     tests = [
              ([[1,0,0],[0,1,0],[0,0,1]], [0,0,0], 9, 10),
-             ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], 9, 10),
+             ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], -9, 10),
     ]
     for m2, m1, c, b in tests:
         print(qsolve(m2, m1, c, b))
