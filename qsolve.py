@@ -21,8 +21,6 @@ def timeit(f): # @timeit
 This module solves a general quadratic diophantine equation in n variables x=(x_1,..,x_n) in the form 
 (x^t).M2.x + M1.x + c = 0,
 where M2 is a positive definite matrix.
-Optional parameter 'boundary' restricts solutions to the cube |x_1|, .. |x_n| < boundary.
-If 'boundary' is present, then M2 can be arbitrary.
 '''
 
 # finds x that minimizes Q = x^T.m2.x + m1.x, see http://komarix.org/ac/papers/thesis/thesis_html/node11.html
@@ -51,7 +49,7 @@ def qform_minimum(A, m1):
   return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
 
 
-def qsolve_iterative(m2, m1, c, boundary):
+def qsolve_iterative(m2, m1, c):
     n = len(m2)
     if n==1:
         a=m2[0,0]
@@ -85,7 +83,7 @@ def qsolve_iterative(m2, m1, c, boundary):
         sols_a = []
         while sols_a!=None:
           #print 'trying a=',a
-          sols_a = qsolve_iterative(M2(a), M1(a), C(a), boundary)
+          sols_a = qsolve_iterative(M2(a), M1(a), C(a))
           if sols_a==None:
             break
           sols+=[s + [a,] for s in sols_a]
@@ -97,8 +95,8 @@ def qsolve_iterative(m2, m1, c, boundary):
     return sols
 
 #@timeit
-def qsolve(m2, m1, c, boundary):
-    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c, boundary)
+def qsolve(m2, m1, c):
+    s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c)
     return s
 
 

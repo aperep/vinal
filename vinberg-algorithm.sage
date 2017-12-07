@@ -59,8 +59,7 @@ class VinAl:
             
         s.V1 = s.V.submodule(matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel()) # V1 = <v0>^\perp
         s.M1 = s.V1.gram_matrix()
-        s.mu = (sorted(s.M1.eigenvalues()))[0]
-        print 'mu =',s.mu
+        #s.mu = (sorted(s.M1.eigenvalues()))[0]
         
         s.W=[s.V(w) for w in GetIntegerPoints(s.V1.matrix().insert_row(s.n-1, s.v0))] # w_1..w_m
         s.W.sort(key = lambda x: -s.v0.inner_product(x))
@@ -140,12 +139,11 @@ class VinAl:
         or, introducing m1, m2, c:
         ( 2 m1 + x^t m2 ) x == c.
         '''
-        boundary = round(sqrt(k/s.mu))+max(abs(a[i]) for i in range(s.n))
         g = Matrix(s.V1.gens()) 
         m2 = np.dot( np.dot(g, M), g.transpose())
         m1 = np.dot( np.dot( Matrix(a), M), g.transpose() )
         c = int(k - a.inner_product(a))
-        solutions = qsolve.qsolve(m2, int(2)*m1, -c, boundary)
+        solutions = qsolve.qsolve(m2, int(2)*m1, -c)
         def V1_vector(x):
             return sum(x[i]*s.V1.gens()[i] for i in range(s.n-1))
         return [V1_vector(x)+a for x in solutions]
