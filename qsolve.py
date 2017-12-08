@@ -110,4 +110,4 @@ if __name__ == "__main__":
              ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], -9, 10),
     ]
     for m2, m1, c, b in tests:
-        print(timeit(qsolve)(m2, m1, c, b))
+        print(timeit(qsolve)(m2, m1, c))
