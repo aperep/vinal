@@ -29,7 +29,7 @@ def gram_matrix2graph(M, d):
             if M[i][j] != 0:
                 strings.append('{0} {1} {2}\n'.format(j+1, i+1, weight(M,i,j) ))
     strings.append('\n')
-    print(strings)
+    #print(strings)
     return strings
     
 

@@ -100,6 +100,7 @@ class VinAl:
             if len(s.roots)<1:
                 return False
             M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
+            print('checking polyhedron with Gram matrix')
             print(M)
             return coxiter.run(M, s.n)
     
@@ -108,6 +109,7 @@ class VinAl:
         s.roots = s.FundCone()
         for root in s.NextRoot():
             s.roots.append(root)
+            print('roots found: {0}, they are:\n{1}'.format(len(s.roots),s.roots))
             if s.is_FundPoly():
                 print('Fundamental Polyhedron constructed, roots:')
                 print(s.roots)
@@ -115,7 +117,7 @@ class VinAl:
 
     def FundCone(s):
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
-        print('roots in V1:', V1_roots)
+        print('roots in V1: {}'.format(V1_roots))
         cone = Cone([[0]*s.n]).dual()
         #print('cone', cone.rays())
         for root in V1_roots:
@@ -176,6 +178,7 @@ class VinAl:
 M = matrix([[-10,0,0,0],[0,2,-1,0],[0,-1,2,0],[0,0,0,1]])
 #M = diagonal_matrix(ZZ,[-3,5,1,1])
 #M = diagonal_matrix(ZZ,[-1,3,3,2])
+M = matrix([[-7,0,0,0],[0,2,-1,0],[0,-1,2,-1],[0,0,-1,2]])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)
