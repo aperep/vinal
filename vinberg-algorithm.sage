@@ -101,7 +101,7 @@ class VinAl:
                 return False
             M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
             print('checking polyhedron with Gram matrix')
-            print(M)
+            print(matrix(M))
             return coxiter.run(M, s.n)
     
     @timeit
@@ -168,7 +168,7 @@ class VinAl:
           #print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
         new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
-            print 'root candidates', new_roots
+            print 'new root candidates', new_roots
         for root in new_roots:
             yield root
             
