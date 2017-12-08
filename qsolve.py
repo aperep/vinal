@@ -36,7 +36,7 @@ def qform_minimum(A, m1):
   i=0
   #print('solving qform A', A,b)
   while r.dot(r)>0.1:
-    beta  = np.dot(r,r)/np.dot(r_prev,r_prev) if r_prev!=None else 0
+    beta  = 0 if r_prev is None else np.dot(r,r)/np.dot(r_prev,r_prev)
     d     = r+beta*d
     alpha =-np.dot(r,r)/r.dot(np.dot(A,r))
     x     = x-alpha*d
@@ -44,8 +44,11 @@ def qform_minimum(A, m1):
     r     = b-np.dot(A,x)
     #print('solving qform', i, alpha, beta, d, r, x, r_prev)
     i+=1
-    if i>n:
-      return
+    if i>2*n+1: # should converge in n steps, but does not always do
+      print('Error: qform_minimum take too long on input:')
+      print(A, m1)
+      print('x={0}, r={1}'.format(x,r))
+      raise Exception
   return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
 
 
