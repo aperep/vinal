@@ -3,6 +3,7 @@ import numpy as np
 import itertools
 import time
 import math
+import scipy.sparse.linalg as linalg
 
 def timeit(f): # @timeit
     
@@ -23,32 +24,9 @@ This module solves a general quadratic diophantine equation in n variables x=(x_
 where M2 is a positive definite matrix.
 '''
 
-# finds x that minimizes Q = x^T.m2.x + m1.x, see http://komarix.org/ac/papers/thesis/thesis_html/node11.html
 def qform_minimum(A, m1):
   b=-.5*m1
-  n=len(A)
-  x=np.zeros(n)
-  d=np.copy(b)
-  r=np.copy(b)
-  r_prev=None
-  beta=0
-  alpha=0
-  i=0
-  #print('solving qform A', A,b)
-  while r.dot(r)>0.1:
-    beta  = 0 if r_prev is None else np.dot(r,r)/np.dot(r_prev,r_prev)
-    d     = r+beta*d
-    alpha =-np.dot(r,r)/r.dot(np.dot(A,r))
-    x     = x-alpha*d
-    r_prev= r
-    r     = b-np.dot(A,x)
-    #print('solving qform', i, alpha, beta, d, r, x, r_prev)
-    i+=1
-    if i>2*n+1: # should converge in n steps, but does not always do
-      print('Error: qform_minimum take too long on input:')
-      print(A, m1)
-      print('x={0}, r={1}'.format(x,r))
-      raise Exception
+  x = linalg.cg(A,b)[0]
   return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
 
 
@@ -111,3 +89,4 @@ if __name__ == "__main__":
     ]
     for m2, m1, c, b in tests:
         print(timeit(qsolve)(m2, m1, c))
+    qform_minimum(np.array([[ 2, -1],[-1, 2]]), np.array([ 0, 128]))
