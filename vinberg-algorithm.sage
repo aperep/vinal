@@ -16,6 +16,12 @@ from profiling_decorators import *
 import qsolve
 import coxiter
 
+import igraph
+def MakeGraph(M):
+    g = igraph.Graph()
+    g.add_vertices(len(M))
+    g.add_edges([(i,j)  for i in range(n) for j in range(n) if (i > j) and (M[i][j]!=0)])
+    print(g)
 
 
 def GetIntegerPoints(m):
@@ -78,6 +84,7 @@ class VinAl:
         print("V1:")
         print(s.V1.vector_space())
         print(s.V1.gram_matrix())
+        MakeGraph(s.M)
         
     def check_validity(s):
         assert s.M.is_square()
@@ -182,4 +189,5 @@ M = matrix([[-7,0,0,0],[0,2,-1,0],[0,-1,2,-1],[0,0,-1,2]])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
 A = VinAl(M)
+A.Print()
 A.FindRoots()
