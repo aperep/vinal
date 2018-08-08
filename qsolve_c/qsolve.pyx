@@ -5,21 +5,6 @@ import time
 import math
 import scipy.sparse.linalg as linalg
 
-import qsolve_c
-
-def timeit(f): # @timeit
-    
-    def timed(*args, **kw):
-        
-        ts = time.time()
-        result = f(*args, **kw)
-        te = time.time()
-        
-        print 'func:%r args:[%r, %r] took: %2.4f sec' % \
-            (f.__name__, args, kw, te-ts)
-        return result
-    return timed
-
 '''
 This module solves a general quadratic diophantine equation in n variables x=(x_1,..,x_n) in the form 
 (x^t).M2.x + M1.x + c = 0,
@@ -33,6 +18,7 @@ def qform_minimum(A, m1):
 
 
 def qsolve_iterative(m2, m1, c):
+    cdef int n, a, b, x0, x1, x2
     n = len(m2)
     if n==1:
         a=m2[0,0]
@@ -41,15 +27,15 @@ def qsolve_iterative(m2, m1, c):
         if disc<0:
             return None
         if disc==0:
-            x = int((-b)//(2*a))
-            return [[x,],] if a*x*x+b*x+c==0 else []
+            x0 = int((-b)//(2*a))
+            return [[x0,],] if a*x0*x0+b*x0+c==0 else []
         disc = round(math.sqrt(disc))
         x1 = int((-b+disc)//(2*a))
         x2 = int((-b-disc)//(2*a))
         sols = [[x,] for x in (x1,x2) if a*x*x+b*x+c==0]
         return sols
 
-    x, val = qform_minimum(m2,m1)
+    x, val = qform_minimum(m2,m1) 
     #print(m2, m1, c, x, val)
     if val>-c+.1:
       return None
@@ -82,13 +68,3 @@ def qsolve(m2, m1, c):
     s = qsolve_iterative(np.array(m2, dtype=np.int), np.array(m1, dtype=np.int).reshape(-1), c)
     return s
 
-
-
-if __name__ == "__main__":
-    tests = [
-             ([[1,0,0],[0,1,0],[0,0,1]], [0,0,0], 9, 10),
-             ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], -9, 10),
-    ]
-    for m2, m1, c, b in tests:
-        print(timeit(qsolve)(m2, m1, c))
-    qform_minimum(np.array([[ 2, -1],[-1, 2]]), np.array([ 0, 128]))
