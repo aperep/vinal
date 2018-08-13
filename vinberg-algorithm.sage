@@ -47,17 +47,19 @@ def NegativeVector(V):
 
             
 class VinAl:
-    def __init__(s, M, v0=None):
+    def __init__(s, M, v0=None, base_ring=ZZ): # other base rings are not implemented
         s.M = M
         s.n = s.M.ncols()  # n-1 = dimension of hyperbolic space
-        s.V = FreeModule(ZZ,s.n, inner_product_matrix=s.M) # created a quadratic lattice
+        s.V = FreeModule(base_ring, s.n, inner_product_matrix=s.M) # created a quadratic lattice
         if v0 is None:
             s.v0 = NegativeVector(s.V)
         else:
             assert s.n == len(v0)
             s.v0 = s.V(v0)
-            
-        s.V1 = s.V.submodule(matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel()) # V1 = <v0>^\perp
+        temp = matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel()
+        print temp
+        #print s.V.submodule(temp)
+        s.V1 =matrix([s.v0.dot_product(m) for m in s.M.columns()]).right_kernel() # V1 = <v0>^\perp
         s.M1 = s.V1.gram_matrix()
         #s.mu = (sorted(s.M1.eigenvalues()))[0]
         
@@ -72,7 +74,7 @@ class VinAl:
         s.roots = []
         print("Vinberg algorithm initialized for matrix \n{}\n".format(M))
 
-    def Print(s): # change to __str__ and/or __repr__
+    def Print(s): # TODO change to __str__ and/or __repr__
         print("W:")
         print(s.W)
         print("V1:")
@@ -115,8 +117,8 @@ class VinAl:
                 print(s.roots)
                 return
 
-    def FundCone(s):
-        V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
+    def FundCone(s):  
+        V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)] # get all roots in V1
         print('roots in V1: {}'.format(V1_roots))
         cone = Cone([[0]*s.n]).dual()
         #print('cone', cone.rays())
@@ -125,8 +127,6 @@ class VinAl:
             #print('halfplane', halfplane.rays())
             if cone.intersection(halfplane).dim() == s.n:
                 cone = cone.intersection(halfplane)
-            else:
-                cone = cone.intersection(Cone([-root]).dual())
         #print('cone', cone.rays())
         print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
         return [s.V(r) for r in cone.dual().rays()]
@@ -181,5 +181,6 @@ M = matrix([[-10,0,0,0],[0,2,-1,0],[0,-1,2,0],[0,0,0,1]])
 M = matrix([[-7,0,0,0],[0,2,-1,0],[0,-1,2,-1],[0,0,-1,2]])
 #v0 = [1,0,0,0]
 print('initializing a VinAl instance at a variable "A"\n')
-A = VinAl(M)
+ring = ZZ
+A = VinAl(M, base_ring=ring)
 A.FindRoots()
