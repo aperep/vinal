@@ -3,6 +3,9 @@ from cached_property import cached_property
 
 from forms import *
 
+import ppl # this is a PARMA interface for double description of cones, see Requirements in https://pypi.org/project/pplpy/#description for installation
+
+
 class Lattice: 
   def __init__(self, Q, v0=None):
     '''
