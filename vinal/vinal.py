@@ -11,7 +11,6 @@ class Lattice:
     '''
     here we establish necessary coordinate systems
     Q - integer-valued quadratic form on Z^n in a form of an array of arrays of integers
-    keyword parameters:
     v0 - optional starting negative vector
     '''
     self.Q = Matrix(Q) # quadratic form on the ambient space
@@ -19,16 +18,16 @@ class Lattice:
     self.basis = [eye(self.n).col(i) for i in range(self.n)]
 
     if v0 == None:
-      self.Q_diag, self.basis_diag = rational_diagonal_form(self.Q)
-      self.v0 = self.basis_diag[:,0] # do we need that?
-      self.V1_basis = self.basis_diag[:,1:]
+      self.Q_diag, self.basis_diag  = rational_diagonal_form(self.Q)
+      self.v0                       = self.basis_diag[:,0] # do we need that?
+      self.V1_basis                 = self.basis_diag[:,1:]
     else:
-      self.v0 = Matrix(v0)
-      V1_skew_basis = (self.Q*self.v0).T.nullspace()
-      Q1 = V1_skew_basis.T * self.Q * V1_skew_basis
-      Q1_diag, self.V1_basis = rational_diagonal_form(Q1)
-      self.basis_diag = [self.v0] + self.V1_basis
-      self.Q_diag = diag(self.v0.T * self.Q * self.v0, Q1_diag)
+      self.v0                       = Matrix(v0)
+      V1_skew_basis                 = (self.Q*self.v0).T.nullspace()
+      Q1                            = V1_skew_basis.T * self.Q * V1_skew_basis
+      Q1_diag, self.V1_basis        = rational_diagonal_form(Q1)
+      self.basis_diag               = [self.v0] + self.V1_basis
+      self.Q_diag                   = diag(self.v0.T * self.Q * self.v0, Q1_diag)
       
     assert (self.v0.T * self.Q * self.v0)[0,0] < 0
 
@@ -55,7 +54,10 @@ class VinAl(Lattice):
     return [k for k in range(1,2*self.En+1) if ((2*self.En)%k == 0)]
 
   def is_root(self, v):
-        return all( ( (2*v.T*self.Q*e)[0,0] % (v.T*self.Q*v)[0,0] ) == 0 for e in self.basis )
+    v_length = (v.T*self.Q_diag*v)[0,0]
+    if v_length == 0:
+      print('ERROR, root with zero length: ', v)
+    return all( ( (2*v.T*self.Q_diag*e)[0,0] % v_length ) == 0 for e in self.basis_diag ) 
 
   def is_new_root(self, v):
         vector_system = Matrix(self.roots[:self.n-1]+[v,]).T
@@ -87,12 +89,13 @@ class VinAl(Lattice):
         q = [self.Q_diag[i,i] for i in range(1, self.n)]
         c = k - self.Q_diag[0,0]*a[0]**2
         for solution in squares_sum_solve(q, c, offset = a[1:]):
-          yield Matrix([0]+solution) + Matrix(a)
+          yield Matrix([0]+solution) + Matrix(a) 
 
 
   @cached_property
   def roots_in_v0_perp(self): # possible lengths of roots
-      return [v for k in self.root_lengths for v in self.roots_of_type([0]*self.n, k) if self.is_root(v)]
+    #print([v for v in self.roots_of_type([0]*self.n, 2)])
+    return [v for k in self.root_lengths for v in self.roots_of_type([0]*self.n, k) if self.is_root(v)]
 
   def next_root(self):
       for a, k in self.root_types():
@@ -106,7 +109,7 @@ class VinAl(Lattice):
 
 
   def run(self):
-        self.roots = self.fundamental_cone()
+        self.roots = self.fundamental_cone() # roots are in diagonal coordinates !!
         for root in self.next_root():
             self.roots.append(root)
             print('roots found: {0}, they are:\n{1}'.format(len(self.roots),self.roots))
@@ -121,8 +124,8 @@ class VinAl(Lattice):
     for root in self.roots_in_v0_perp:
         if cone.intersects(root):
             cone.append(root)
-        print('FundCone constructed, roots:',cone.rays)
-        return cone.rays
+    print('FundCone constructed, roots:',cone.rays)
+    return cone.rays
 
 
   def finished(self):
@@ -139,3 +142,4 @@ if __name__ == '__main__':
   V = VinAl(A)
   V.run()
   print(V)
+  print(V.roots)

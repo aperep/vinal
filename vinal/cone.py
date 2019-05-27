@@ -16,14 +16,20 @@ def dual(rays):
     A.rep_type = cdd.RepType.INEQUALITY
     P = cdd.Polyhedron( cdd.Matrix(A) )
     generators = P.get_generators()
-    #print(generators, '\n ___ \n')    
+    print(generators, '\n ___ \n')    
     dual_rays = [r[1:] for r in generators if r[0]==0]
     for i in generators.lin_set:
         dual_rays.append(tuple(-c for c in generators[i][1:]))
+    print('a')
     return dual_rays
 
 class Cone:
-    def __init__(self, rays):
+    def __init__(self, rays, n=1):
+        if len(rays)==0:
+            if n==None:
+                print("Cone ERROR: empty input\n")
+                #return
+            #rays = [0]*n
         self.rays = {tuple(r) for r in rays}
         self.reduce()
 
@@ -45,7 +51,8 @@ class Cone:
 
     def is_nonnegative(self, ray):
         dual_rays = dual(self.rays)
-        #print('negativity test, cone:\n',self.rays, "\ndual:\n", dual_rays, '\ntest ray\n', ray, '\nresult:', all(dot(p_ray,ray)>=0 for p_ray in dual_rays))
+        print('negativity test, cone:\n',self.rays, "\ndual:\n", dual_rays, '\ntest ray\n', ray)
+        print('result:', all(dot(p_ray,ray)>=0 for p_ray in dual_rays))
         return all(dot(p_ray,ray)>=0 for p_ray in dual_rays)
             
     def intersects(self, ray):
@@ -67,7 +74,9 @@ if __name__ == '__main__':
     B = [
         [0,1,0],
     ]
-    print('dual to [0,1,0]:',dual(B))
+    print('Dual to [0,1,0]:',dual(B))
     C = Cone(A)
     C.reduce()
     print(C)
+    print(dual([]))
+    print('end')
