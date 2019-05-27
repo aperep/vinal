@@ -2,8 +2,8 @@ from sympy import *
 from cached_property import cached_property
 
 from forms import *
+from cone import Cone
 
-import ppl # this is a PARMA interface for double description of cones, see Requirements in https://pypi.org/project/pplpy/#description for installation
 
 
 class Lattice: 
@@ -116,10 +116,7 @@ class VinAl(Lattice):
                 return
 
 
-  def fundamental_cone(self): # we don't have polyhedral cones in sympy, need to rethink.
-  # either take algorithm from sagemath, or use something like PyNormaliz, pyparma, or pycddlib - they implement double description of polyhedra;
-  # for self-contained implementation, look at page 5-8 of http://www.lab2.kuis.kyoto-u.ac.jp/~avis/courses/pc/2010/notes/lec5.pdf or function `initial_pair` at https://github.com/sagemath/sage/blob/e8633b09919542a65e7e990c8369fee30c7edefd/src/sage/geometry/polyhedron/double_description.py
-  # Trying to implement this version ftp://ftp.math.tu-berlin.de/pub/Lehre/LinOpt/WS06/Uebung15.11.06/fukuda96double.pdf
+  def fundamental_cone(self): 
        
         for root in self.roots_in_v0_perp:
             halfplane = Cone([root]).dual()
