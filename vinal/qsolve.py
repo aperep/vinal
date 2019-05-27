@@ -26,8 +26,9 @@ def squares_sum_solve(q, c, offset = None):
   def solutions(i, x, remainder):
     if i==0:
       x_1_values = [k for k, v in summands[0].items() if v == remainder]
-      if len(x_1_values) not in {1,2}: # sanity check
-        print('ERROR (internal): wrong sum\t',summands[0], remainder, x_1_values)
+      if len(x_1_values)>2: # sanity check
+        print('ERROR (internal): wrong sum\n','q: ',q,'\nc: ',c,'\noffset: ',offset,
+          '\nsummands[0]: ',summands[0], '\nremainder: ',remainder, '\nx1: ',x_1_values)
       for x_1 in x_1_values:
         x[0] = x_1
         yield x

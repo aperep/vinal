@@ -55,7 +55,7 @@ class VinAl(Lattice):
     return [k for k in range(1,2*self.En+1) if ((2*self.En)%k == 0)]
 
   def is_root(self, v):
-        return all( ( (2*v.T*self.Q*e) % (v.T*self.Q*v) ) == 0 for e in self.basis )
+        return all( ( (2*v.T*self.Q*e)[0,0] % (v.T*self.Q*v)[0,0] ) == 0 for e in self.basis )
 
   def is_new_root(self, v):
         vector_system = Matrix(self.roots[:self.n-1]+[v,]).T
@@ -87,7 +87,7 @@ class VinAl(Lattice):
         q = [self.Q_diag[i,i] for i in range(1, self.n)]
         c = k - self.Q_diag[0,0]*a[0]**2
         for solution in squares_sum_solve(q, c, offset = a[1:]):
-          yield Matrix([0]+solution) + a
+          yield Matrix([0]+solution) + Matrix(a)
 
 
   @cached_property
