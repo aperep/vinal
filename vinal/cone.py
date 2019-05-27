@@ -25,6 +25,11 @@ def dual(rays):
 class Cone:
     def __init__(self, rays):
         self.rays = {tuple(r) for r in rays}
+        self.reduce()
+
+    def append(self, ray):
+        self.rays.add(tuple(ray))
+        self.reduce()
         
     def reduce(self):
         while self.reduce_once():

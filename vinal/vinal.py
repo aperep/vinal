@@ -3,7 +3,7 @@ from cached_property import cached_property
 
 from forms import *
 from cone import Cone
-
+from qsolve import squares_sum_solve
 
 
 class Lattice: 
@@ -117,23 +117,25 @@ class VinAl(Lattice):
 
 
   def fundamental_cone(self): 
-       
-        for root in self.roots_in_v0_perp:
-            halfplane = Cone([root]).dual()
-            #print('halfplane', halfplane.rays())
-            if cone.intersection(halfplane).dim() == s.n:
-                cone = cone.intersection(halfplane)
-            else:
-                cone = cone.intersection(Cone([-root]).dual())
-        #print('cone', cone.rays())
-        print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
-        return [s.V(r) for r in cone.dual().rays()]
+    cone = Cone([])
+    for root in self.roots_in_v0_perp:
+        if cone.intersects(root):
+            cone.append(root)
+        print('FundCone constructed, roots:',cone.rays)
+        return cone.rays
 
 
   def finished(self):
-            if len(s.roots)<1:
+            if len(self.roots)<1:
                 return False
-            M = [[ t.inner_product(r) for t in s.roots] for r in self.roots]
+            M = [[ t.inner_product(r) for t in self.roots] for r in self.roots]
             print('checking polyhedron with Gram matrix')
             print(Matrix(M))
             return coxiter.run(M, self.n)
+
+
+if __name__ == '__main__':
+  A = [[0,1],[1,0]]
+  V = VinAl(A)
+  V.run()
+  print(V)
