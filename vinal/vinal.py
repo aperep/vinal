@@ -1,5 +1,6 @@
 from sympy import *
 from cached_property import cached_property
+import math
 
 from forms import *
 from cone import Cone
@@ -120,12 +121,12 @@ class VinAl(Lattice):
 
 
   def fundamental_cone(self): 
-    cone = Cone([])
+    cone = Cone([[0]*self.n])
     for root in self.roots_in_v0_perp:
         if cone.intersects(root):
             cone.append(root)
     print('FundCone constructed, roots:',cone.rays)
-    return cone.rays
+    return list(cone.rays)
 
 
   def finished(self):
