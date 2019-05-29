@@ -65,7 +65,7 @@ class VinAl(Lattice):
         M = Matrix([v.T for v in vector_system])
         if M.rank()< M.cols:
             return False
-        return self.is_root(v) and all(v.T*self.Q*root <=0 for root in self.roots)
+        return self.is_root(v) and all((v.T*self.Q*Matrix(root))[0,0] <=0 for root in self.roots)
 
 
 
@@ -101,24 +101,28 @@ class VinAl(Lattice):
 
   def next_root(self):
       for a, k in self.root_types():
-          #print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
+        print('next_root: working with type ', a, k)#, -a.inner_product(s.v0)/math.sqrt(k))
         new_roots = [v for v in self.roots_of_type(a, k) if self.is_new_root(v)]
         if len(new_roots)>0:
-            #print('new root candidates', new_roots)
+            print('new root candidates', new_roots)
             pass
         for root in new_roots:
+            print('next_root: yielding root ', root)
             yield root # what exactly we want to do here?
 
 
   def run(self):
         self.roots = self.fundamental_cone() # roots are in diagonal coordinates !!
-        for root in self.next_root():
+        if not self.finished():
+          for root in self.next_root():
             self.roots.append(root)
             print('roots found: {0}, they are:\n{1}'.format(len(self.roots),self.roots))
             if self.finished():
-                print('Fundamental Polyhedron constructed, roots:')
-                print(self.roots)
-                return
+                break
+        print('Fundamental Polyhedron constructed, roots:')
+        print(self.roots) # TODO: return to non-diagonal coordinates
+        return self.roots 
+
 
 
   def fundamental_cone(self): 
@@ -140,7 +144,7 @@ class VinAl(Lattice):
 
 
 if __name__ == '__main__':
-  A = [[0,1],[1,0]]
+  A = [[0,1,0],[1,0,0],[0,0,1]]
   V = VinAl(A)
   V.run()
   print(V)
