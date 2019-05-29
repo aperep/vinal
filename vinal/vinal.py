@@ -61,8 +61,9 @@ class VinAl(Lattice):
     return all( ( (2*v.T*self.Q_diag*e)[0,0] % v_length ) == 0 for e in self.basis_diag ) 
 
   def is_new_root(self, v):
-        vector_system = Matrix(self.roots[:self.n-1]+[v,]).T
-        if vector_system.rank()< vector_system.cols:
+        vector_system = self.roots[:self.n-1]+[v,]
+        M = Matrix([v.T for v in vector_system])
+        if M.rank()< M.cols:
             return False
         return self.is_root(v) and all(v.T*self.Q*root <=0 for root in self.roots)
 
@@ -126,7 +127,7 @@ class VinAl(Lattice):
         if cone.intersects(root):
             cone.append(root)
     print('FundCone constructed, roots:',cone.rays)
-    return list(cone.rays)
+    return [Matrix(r) for r in cone.rays]
 
 
   def finished(self):

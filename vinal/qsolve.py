@@ -19,9 +19,10 @@ def squares_sum_solve(q, c, offset = None):
   sums = [set(summands[0].values())] # ith element consists of all possible sums of first i summands
   for i in range(1,n):
     sums.append({p+q for p in sums[i-1] for q in summands[i].values() if p+q <=c})
-  print('squares_sum_solve, sums:',sums[n-1])
+  #print('squares_sum_solve, sums:',sums[n-1])
   if c not in sums[n-1]:
-    print('squares_sum_solve: no solutions found')
+    #print('squares_sum_solve: no solutions found')
+    pass
 
   def solutions(i, x, remainder):
     if i==0:
