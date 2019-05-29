@@ -5,7 +5,7 @@ import math
 from forms import rational_diagonal_form, parallelepiped_integer_points
 from cone import Cone
 from qsolve import squares_sum_solve
-
+import coxiter
 
 class Lattice: 
   def __init__(self, Q, v0=None):
@@ -81,10 +81,10 @@ class VinAl(Lattice):
     return all( 2*d % v_length == 0 for d in self.dot(v, self.basis) ) 
 
   def is_new_root(self, v):
-        M = self.roots[:, :self.n-1].insert_col(0, v)
+        M = self.roots[:, :self.n-1].col_insert(0, v)
         if M.rank() < M.cols:
             return False
-        return self.is_root(v) and all(( dot <= 0 for dot in self.dot(v,self.roots))
+        return self.is_root(v) and all( dot <= 0 for dot in self.dot(v,self.roots) )
 
 
 
@@ -134,13 +134,13 @@ class VinAl(Lattice):
         self.roots = self.fundamental_cone() # roots are in diagonal coordinates !! 
         if not self.finished():
           for root in self.next_root():
-            self.roots = self.roots.insert_col(self.roots.cols, root)
+            self.roots = self.roots.col_insert(self.roots.cols, root)
             print('roots found: {0}, they are:\n{1}'.format(self.roots.cols,self.roots))
             if self.finished():
                 break
         print('Fundamental Polyhedron constructed, roots:')
         print(self.roots) # TODO: return to non-diagonal coordinates
-        return self.roots 
+        return self.roots.T 
 
 
 
@@ -150,7 +150,7 @@ class VinAl(Lattice):
         if cone.intersects(root):
             cone.append(root)
     print('FundCone constructed, roots:',cone.rays)
-    return Matrix(cone.rays).T
+    return Matrix(list(cone.rays)).T.tolist()
 
 
   def finished(self):
@@ -158,13 +158,12 @@ class VinAl(Lattice):
                 return False
             M = self.dot(self.roots, self.roots)
             print('checking polyhedron with Gram matrix')
-            print(Matrix(M))
-            return coxiter.run(M, self.n)
+            print(M)
+            return coxiter.run(M.tolist(), self.n)
 
 
 if __name__ == '__main__':
   A = [[0,1,0],[1,0,0],[0,0,1]]
   V = VinAl(A)
-  V.run()
-  print(V)
-  print(V.roots)
+  roots = V.run()
+  print(roots)
