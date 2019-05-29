@@ -6,11 +6,8 @@ Some parts may work not as intended or not work at all.
 
 ## Installation
 1. Install [Python3](https://www.python.org) including the package manager `pip` if they are not already present at your system.
-2. Install necessary python modules for the repository directory:
-```
-pip install -r requirements.txt
-```
-Main dependencies here are [SymPy](https://www.sympy.org/) for matrix operations and `[pycddlib](https://pycddlib.readthedocs.io/en/latest/)`, a Python wrapper for Komei Fukuda’s [cddlib](https://inf.ethz.ch/personal/fukudak/cdd_home/) used for calculating dual cones in constructing the fundamental cone. There is a known [issue](https://github.com/mcmtroffaes/pycddlib/issues/2) with `pycddlib` installation, so you may need to install the C/C++ library [GMP](https://gmplib.org/) either installing the `libgmp3-dev` module with a package manager or [manually](https://www.mersenneforum.org/showthread.php?t=23079).
+2. Install necessary python modules for the repository directory: `pip install -r requirements.txt`.
+Main dependencies here are [SymPy](https://www.sympy.org/) for matrix operations and [`pycddlib`](https://pycddlib.readthedocs.io/en/latest/), a Python wrapper for Komei Fukuda’s [cddlib](https://inf.ethz.ch/personal/fukudak/cdd_home/) used for calculating dual cones in constructing the fundamental cone. There is a known [issue](https://github.com/mcmtroffaes/pycddlib/issues/2) with `pycddlib` installation, so you may need to install the C/C++ library [GMP](https://gmplib.org/) either installing the `libgmp3-dev` module with a package manager or [manually](https://www.mersenneforum.org/showthread.php?t=23079).  
 3. Compile Rafael Guglielmetti's [CoxIter](https://rgugliel.github.io/CoxIter) into a binary `./CoxIter/build/coxiter` as [instructed](https://rgugliel.github.io/CoxIter/pageInstall.html). It is used to check whether the found set of roots is complete.
 
 ## Usage example
