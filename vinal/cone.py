@@ -1,4 +1,4 @@
-import sympy
+#import sympy
 import cdd # there is a problem with installing 'pip3 install pycddlib', since cddlib uses GMP in a broken way, see issue https://github.com/mcmtroffaes/pycddlib/issues/2 ; may try to install GMP via https://www.mersenneforum.org/showthread.php?t=23079
 
 '''

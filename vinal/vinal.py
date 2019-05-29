@@ -2,7 +2,7 @@ from sympy import *
 from cached_property import cached_property
 import math
 
-from forms import *
+from forms import rational_diagonal_form, parallelepiped_integer_points
 from cone import Cone
 from qsolve import squares_sum_solve
 
@@ -15,57 +15,76 @@ class Lattice:
     v0 - optional starting negative vector
     '''
     self.Q = Matrix(Q) # quadratic form on the ambient space
-    self.n = self.Q.shape[0] # dimension of ambient space
-    self.basis = [eye(self.n).col(i) for i in range(self.n)]
+    self.n = self.Q.rows # dimension of ambient space
+    self.basis = eye(self.n)
 
     if v0 == None:
       self.Q_diag, self.basis_diag  = rational_diagonal_form(self.Q)
       self.v0                       = self.basis_diag[:,0] # do we need that?
-      self.V1_basis                 = self.basis_diag[:,1:]
+      self.V1_basis_diag            = self.basis_diag[:,1:]
+      self.basis_diag_inverse       = self.basis_diag ** -1
     else:
+      raise NotImplementedError # TODO: First cover with tests, then fix this case
       self.v0                       = Matrix(v0)
       V1_skew_basis                 = (self.Q*self.v0).T.nullspace()
       Q1                            = V1_skew_basis.T * self.Q * V1_skew_basis
       Q1_diag, self.V1_basis        = rational_diagonal_form(Q1)
-      self.basis_diag               = [self.v0] + self.V1_basis
+      self.basis_diag               = [self.v0] + self.V1_basis # TODO: inconsistent dimension
       self.Q_diag                   = diag(self.v0.T * self.Q * self.v0, Q1_diag)
-      
-    assert (self.v0.T * self.Q * self.v0)[0,0] < 0
+    
+    assert self.dot(self.v0, self.v0) < 0
 
   @cached_property 
   def W(self): # all shifts of orthogonal lattice that give Z^n
-    return sorted(parallelepiped_integer_points(self.basis_diag), key = lambda x: -(self.v0.T * self.Q * x)[0,0]) # 
+    return sorted(parallelepiped_integer_points(self.basis_diag), key = lambda x: -self.dot(self.v0, x)) # 
  
   @cached_property
   def En(self): # higher ???, which is an upper bound of root length 
     adjoint_elements = [self.Q.cofactor(i,j) for i in range(self.n) for j in range(self.n)]
     return abs(self.Q.det()/gcd(adjoint_elements))
 
+  def dot_Q(self, a, b, Q):
+    product = (a.T*self.Q*b)
+    if product.shape == (1, 1):
+      return product[0,0]
+    else:
+      return product
+  
+  def dot(self, a, b):
+    return self.dot_Q(a,b,self.Q)
 
+  def dot_diag(self, a, b):
+    return self.dot_Q(a,b,self.Q_diag)
+
+  def to_diag(self, v):
+    return self.basis_diag_inverse * v
+
+  def from_diag(self, v):
+    return self.basis_diag * v
+
+  def vectors(self, M):
+    return [M.col(q) for q in range(M.cols)]
 
 
 class VinAl(Lattice):
   def __init__(self, Q, v0=None):
     super().__init__(Q,v0)
-    self.roots = []
-
+    self.roots = None
 
   @cached_property
   def root_lengths(self): # possible lengths of roots
     return [k for k in range(1,2*self.En+1) if ((2*self.En)%k == 0)]
 
   def is_root(self, v):
-    v_length = (v.T*self.Q_diag*v)[0,0]
-    if v_length == 0:
-      print('ERROR, root with zero length: ', v)
-    return all( ( (2*v.T*self.Q_diag*e)[0,0] % v_length ) == 0 for e in self.basis_diag ) 
+    v_length = self.dot(v,v)
+    assert v_length != 0
+    return all( 2*d % v_length == 0 for d in self.dot(v, self.basis) ) 
 
   def is_new_root(self, v):
-        vector_system = self.roots[:self.n-1]+[v,]
-        M = Matrix([v.T for v in vector_system])
-        if M.rank()< M.cols:
+        M = self.roots[:, :self.n-1].insert_col(0, v)
+        if M.rank() < M.cols:
             return False
-        return self.is_root(v) and all((v.T*self.Q*Matrix(root))[0,0] <=0 for root in self.roots)
+        return self.is_root(v) and all(( dot <= 0 for dot in self.dot(v,self.roots))
 
 
 
@@ -91,7 +110,7 @@ class VinAl(Lattice):
         q = [self.Q_diag[i,i] for i in range(1, self.n)]
         c = k - self.Q_diag[0,0]*a[0]**2
         for solution in squares_sum_solve(q, c, offset = a[1:]):
-          yield Matrix([0]+solution) + Matrix(a) 
+          yield self.from_diag( Matrix([0]+solution) + Matrix(a) ) # TODO: check correctness
 
 
   @cached_property
@@ -112,11 +131,11 @@ class VinAl(Lattice):
 
 
   def run(self):
-        self.roots = self.fundamental_cone() # roots are in diagonal coordinates !!
+        self.roots = self.fundamental_cone() # roots are in diagonal coordinates !! 
         if not self.finished():
           for root in self.next_root():
-            self.roots.append(root)
-            print('roots found: {0}, they are:\n{1}'.format(len(self.roots),self.roots))
+            self.roots = self.roots.insert_col(self.roots.cols, root)
+            print('roots found: {0}, they are:\n{1}'.format(self.roots.cols,self.roots))
             if self.finished():
                 break
         print('Fundamental Polyhedron constructed, roots:')
@@ -131,13 +150,13 @@ class VinAl(Lattice):
         if cone.intersects(root):
             cone.append(root)
     print('FundCone constructed, roots:',cone.rays)
-    return [Matrix(r) for r in cone.rays]
+    return Matrix(cone.rays).T
 
 
   def finished(self):
-            if len(self.roots)<1:
+            if len(self.roots)<2:
                 return False
-            M = [[ t.inner_product(r) for t in self.roots] for r in self.roots]
+            M = self.dot(self.roots, self.roots)
             print('checking polyhedron with Gram matrix')
             print(Matrix(M))
             return coxiter.run(M, self.n)
