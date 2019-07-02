@@ -150,7 +150,7 @@ class VinAl(Lattice):
         if cone.intersects(root):
             cone.append(root)
     print('FundCone constructed, roots:',cone.rays)
-    return Matrix(list(cone.rays)).T.tolist()
+    return Matrix(list(cone.rays)).T
 
 
   def finished(self):
