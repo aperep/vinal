@@ -8,16 +8,16 @@ def weight(M, i, j):
     try:
         return {
             0: 2,
-            1/4: 3,
-            1/2: 4,
-            3/4: 6,
-            1: 0,
-        }[cos2]
+            1: 3,
+            2: 4,
+            3: 6,
+            4: 0,
+        }[int(4*cos2)]
     except KeyError:
         if cos2 > 1:
             return 1
         else:
-            print('coxiter.py ERROR: cosine = ', cos2)
+            print('coxiter.py ERROR: cosine cannot be ', cos2)
             return -1
 
 def gram_matrix2graph(M, d):
