@@ -167,3 +167,5 @@ if __name__ == '__main__':
   V = VinAl(A)
   roots = V.run()
   print(roots)
+  D = diag(-3,5,1,1)
+  VD = VinAl(D)

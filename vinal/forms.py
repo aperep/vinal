@@ -61,13 +61,14 @@ def rational_diagonal_form(Q):
         T = T * temp
 
     # put negative vector first
-    if any(D[i,i]<0 for i in range(n)):
+    if any(D[i,i]<0 for i in range(n)):    
       negative_index = min(i for i in range(n) if D[i,i]<0)
-      temp = eye(n)
-      temp[0, negative_index] = temp[negative_index, 0] = 1
-      temp[0, 0] = temp[negative_index, negative_index] = 0
-      D = temp.T*D*temp
-      T = T * temp
+      if negative_index != 0:
+        temp = eye(n)
+        temp[0, 0], temp[negative_index, negative_index] = 0, 0
+        temp[0, negative_index], temp[negative_index, 0] = 1, 1
+        D = temp.T*D*temp
+        T = T * temp
 
     return D, T
 
@@ -87,3 +88,9 @@ def parallelepiped_integer_points(m):
         Q = Matrix(v).T*m.inv()
         return all( (c < 1) and (c>=0) for c in Q)
     return [Matrix(v) for v in BoundingBox if ParallelepipedContains(v)]
+
+
+if __name__ == '__main__':
+  D = diag(-3,5,1,1)
+  Q = rational_diagonal_form(D)
+  print(Q)
