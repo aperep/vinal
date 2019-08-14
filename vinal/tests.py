@@ -1,6 +1,13 @@
-import vinal
+from vinal import *
 import unittest
 import yaml
+
+
+def block(lattice_type, n=0):
+    if lattice_type == 'U':
+        return [[0,1],[1,0]]
+    if lattice_type == 'A':
+        return [[max(2-abs(i-j),0)  for j in range(n)] for i in range(n)]
 
 class VinalTestCase(unittest.TestCase):
     def setUp(self):
@@ -9,8 +16,11 @@ class VinalTestCase(unittest.TestCase):
 
     def test_En(self):
       for L in self.lattices:
-        self.assertEqual(vinal.VinAl(L['Q']).En, L['En'],
-                         'incorrect En')
+        M = blocks(L['blocks'])
+        self.assertEqual(VinAl(M).En, L['En'],
+                        f'incorrect En for entry {L}')
+        self.assertTrue(VinAl(L['Q']).is_root(L['root_example']), f'incorrect root_example for entry {L}')
+
 
 if __name__ == '__main__':
     unittest.main()
