@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from subprocess import call
+from pathlib import Path
 
 def weight(M, i, j):
     cos2 = (M[i][j]*M[i][j])/(M[i][i]*M[j][j])
@@ -32,11 +33,12 @@ def gram_matrix2graph(M, d):
     return strings
     
 
-def run(M, d, graph_file = 'graph.txt', answer_file = 'answer.txt', coxiter_dir = '../CoxIter/build/' ):
-    with open(coxiter_dir+graph_file, 'w') as graph:
+def run(M, d, graph_file = 'graph.txt', answer_file = 'answer.txt', 
+                coxiter_dir = Path(__file__).parent.parent.joinpath('CoxIter/build/') ):
+    with open(coxiter_dir.joinpath(graph_file), 'w') as graph:
         graph.writelines(gram_matrix2graph(M, d))
-    call('bash -c "{0}coxiter -fv < {0}{1} > {0}{2}"'.format(coxiter_dir, graph_file, answer_file), shell=True)
-    with open(coxiter_dir+answer_file, 'r') as out:
+    call('bash -c "{0}/coxiter -fv < {0}/{1} > {0}/{2}"'.format(coxiter_dir, graph_file, answer_file), shell=True)
+    with open(coxiter_dir.joinpath(answer_file), 'r') as out:
         response = out.readlines()
     question = 'Finite covolume'
     answer = [('yes' in s) for s in response if question in s]
