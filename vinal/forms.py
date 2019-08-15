@@ -1,6 +1,8 @@
 from sympy import *
 import itertools
-
+import math
+import functools
+from fractions import Fraction
 
 def negative_vector(Q):
     D, T = rational_diagonal_form(Q)
@@ -70,6 +72,15 @@ def rational_diagonal_form(Q):
         D = temp.T*D*temp
         T = T * temp
 
+    # make basis vectors primitive:
+    for i in range(n):
+        gcd = functools.reduce(lambda x,y:math.gcd(x,y),tuple(T[:,i]))
+        if abs(gcd) != 1:
+            temp = eye(n)
+            temp[i,i]=Fraction(1,gcd)
+            D = temp.T*D*temp
+            T = T * temp
+
     return D, T
 
 
@@ -84,8 +95,9 @@ def parallelepiped_integer_points(m):
     negative = [sum(a for a in m[i,:] if a<0) for i in range(n)]
     positive = [sum(a for a in m[i,:] if a>0) for i in range(n)]
     BoundingBox = itertools.product(*[range(negative[i],positive[i]+1) for i in range(len(negative))])
+    minv = m.inv()
     def ParallelepipedContains(v):#v is a row, m is a matrix with polytope generators as rows
-        Q = Matrix(v).T*m.inv()
+        Q = Matrix(v).T*minv
         return all( (c < 1) and (c>=0) for c in Q)
     return [Matrix(v) for v in BoundingBox if ParallelepipedContains(v)]
 
