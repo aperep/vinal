@@ -13,5 +13,5 @@ print('Problem is in V.roots_of_type(zero_vector,2), which is: ', [tuple(r) for 
 print(f'v in diagonal coordinates is {V.to_diag(v)}, which is not integer')
 
 
-print(f'Another problem is that W takes forever to compute due to large parallelepiped in parallelepiped_integer_points')
-print(f'diagonal basis vectors are not primitive, e.g., last one: {V.basis_diag}')
+#print(f'Another problem is that W takes a lot to compute due to large parallelepiped in parallelepiped_integer_points')
+print(f'diagonal basis vectors are primitive now, e.g., last one: {V.basis_diag.T}')

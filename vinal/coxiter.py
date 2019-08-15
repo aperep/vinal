@@ -23,11 +23,11 @@ def weight(M, i, j):
 
 def gram_matrix2graph(M, d):
     n = len(M)
-    strings = ['{0} {1}\n'.format(n,d-1),]
+    strings = [f'{n} {d-1}\n',]
     for i in range(n):
         for j in range(i):
             if M[i][j] != 0:
-                strings.append('{0} {1} {2}\n'.format(j+1, i+1, weight(M,i,j) ))
+                strings.append(f'{j+1} {i+1} {weight(M,i,j)}\n')
     strings.append('\n')
     #print(strings)
     return strings
@@ -43,6 +43,6 @@ def run(M, d, graph_file = 'graph.txt', answer_file = 'answer.txt',
     question = 'Finite covolume'
     answer = [('yes' in s) for s in response if question in s]
     if len(answer) == 0:
-        print('"{}" not found, check answer.txt, you may want to rebuild CoxIter'.format(question))
+        print(f'"{question}" not found, check answer.txt, you may want to rebuild CoxIter')
         raise Exception('coxiter.py', 'did not find answer')
     return answer[0]
