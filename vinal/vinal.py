@@ -1,6 +1,8 @@
 from sympy import *
 from cached_property import cached_property
 import math
+import functools
+from fractions import Fraction
 
 from forms import rational_diagonal_form, parallelepiped_integer_points
 from cone import Cone
@@ -36,7 +38,14 @@ class Lattice:
 
   @cached_property 
   def W(self): # all shifts of orthogonal lattice that give Z^n
-    return sorted(parallelepiped_integer_points(self.basis_diag), key = lambda x: -self.dot(self.v0, x)) # 
+    W = [self.primitive_vector]
+    while True:
+      vector = self.to_unit_cube(W[-1]+self.primitive_vector)
+      if vector[0,0]==0:
+        break
+      W.append(vector)
+    W = [self.from_diag(w) for w in W]
+    return sorted(W, key = lambda x: -self.dot(self.v0, x)) # 
  
   @cached_property
   def En(self): # higher ???, which is an upper bound of root length 
@@ -65,6 +74,26 @@ class Lattice:
   def vectors(self, M):
     return [M.col(q) for q in range(M.cols)]
 
+  def to_unit_cube(self, vector): # returns a shift of vector in diagonal coords by diag_lattice in the unit cube
+    return vector.applyfunc(lambda x: x%1)
+  
+  def order(self, vector):
+    denominators = [x.denominator for x in tuple(vector) if type(x)==Fraction]
+    if len(denominators)==0:
+      return 1
+    return functools.reduce(lambda x,y:x*y//math.gcd(x,y),denominators)
+
+  @cached_property 
+  def primitive_vector(self):    
+    def common_generator(v1,v2):
+      order1 = self.order(v1)
+      order2 = self.order(v2)
+      if order1 % order2 == 0:
+        return self.to_unit_cube(v1)
+      if order2 % order1 == 0:
+        return self.to_unit_cube(v2)
+      return self.to_unit_cube(v1+v2)
+    return  functools.reduce(common_generator,self.vectors(self.basis_diag_inverse))
 
 class VinAl(Lattice):
   def __init__(self, Q, v0=None):
