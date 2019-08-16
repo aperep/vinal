@@ -85,23 +85,6 @@ def rational_diagonal_form(Q):
 
 
 
-
-def parallelepiped_integer_points(m):
-    '''
-    takes a list of integer sympy vectors, whose Minkowski sum (as segments) is a parallelepiped P
-    returns a list of integer sympy vectors that are strictly inside P
-    '''
-    n = m.shape[0]
-    negative = [sum(a for a in m[i,:] if a<0) for i in range(n)]
-    positive = [sum(a for a in m[i,:] if a>0) for i in range(n)]
-    BoundingBox = itertools.product(*[range(negative[i],positive[i]+1) for i in range(len(negative))])
-    minv = m.inv()
-    def ParallelepipedContains(v):#v is a row, m is a matrix with polytope generators as rows
-        Q = Matrix(v).T*minv
-        return all( (c < 1) and (c>=0) for c in Q)
-    return [Matrix(v) for v in BoundingBox if ParallelepipedContains(v)]
-
-
 if __name__ == '__main__':
   D = diag(-3,5,1,1)
   Q = rational_diagonal_form(D)

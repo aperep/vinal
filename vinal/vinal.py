@@ -4,7 +4,7 @@ import math
 import functools
 from fractions import Fraction
 
-from forms import rational_diagonal_form, parallelepiped_integer_points
+from forms import rational_diagonal_form
 from cone import Cone
 from qsolve import squares_sum_solve
 import coxiter
@@ -36,17 +36,6 @@ class Lattice:
     
     assert self.dot(self.v0, self.v0) < 0
 
-  @cached_property 
-  def W(self): # all shifts of orthogonal lattice that give Z^n
-    W = [self.primitive_vector]
-    while True:
-      vector = self.to_unit_cube(W[-1]+self.primitive_vector)
-      if vector[0,0]==0:
-        break
-      W.append(vector)
-    W = [self.from_diag(w) for w in W]
-    return sorted(W, key = lambda x: -self.dot(self.v0, x)) # 
- 
   @cached_property
   def En(self): # higher ???, which is an upper bound of root length 
     adjoint_elements = [self.Q.cofactor(i,j) for i in range(self.n) for j in range(self.n)]
@@ -78,22 +67,27 @@ class Lattice:
     return vector.applyfunc(lambda x: x%1)
   
   def order(self, vector):
-    denominators = [x.denominator for x in tuple(vector) if type(x)==Fraction]
-    if len(denominators)==0:
-      return 1
+    denominators = [x.q for x in tuple(vector)]
     return functools.reduce(lambda x,y:x*y//math.gcd(x,y),denominators)
 
+
   @cached_property 
-  def primitive_vector(self):    
-    def common_generator(v1,v2):
-      order1 = self.order(v1)
-      order2 = self.order(v2)
-      if order1 % order2 == 0:
-        return self.to_unit_cube(v1)
-      if order2 % order1 == 0:
-        return self.to_unit_cube(v2)
-      return self.to_unit_cube(v1+v2)
-    return  functools.reduce(common_generator,self.vectors(self.basis_diag_inverse))
+  def shifts(self): # all shifts (in unit cube) of diagonal lattice that comprise the whole lattice
+    multiples = lambda vector: {ImmutableMatrix(i*vector) for i in range(self.order(vector))}
+    basis_multiples = [multiples(v) for v in self.vectors(self.basis_diag_inverse)]
+    minkowski_sum = lambda s1,s2: {ImmutableMatrix(self.to_unit_cube(v1+v2)) for v1 in s1 for v2 in s2}
+    return functools.reduce( minkowski_sum, basis_multiples)
+
+  @cached_property 
+  def shifts_in_V1(): # all shifts that lie in V1
+    return {s for s in self.shifts if s[0,0]==0}
+
+  @cached_property 
+  def W(self): # all shifts of V1+<v0> that give Z^n
+    first_coord = min(s[0,0] for s in self.shifts if s[0,0]!=0)
+    primitive_vector = [s for s in self.shifts if s[0,0]==first_coord][0]
+    return [self.to_unit_cube(i*primitive_vector) for i in range(self.order(primitive_vector))]
+ 
 
 class VinAl(Lattice):
   def __init__(self, Q, v0=None):
