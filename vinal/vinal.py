@@ -89,7 +89,7 @@ class Lattice:
  
   @cached_property 
   def W(self): # all shifts of V1+<v0> that give Z^n
-    return [self.from_diag(w) for w in self.W]
+    return [self.from_diag(w) for w in self.W_diag]
  
 
 class VinAl(Lattice):
