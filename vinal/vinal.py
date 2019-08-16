@@ -82,10 +82,14 @@ class Lattice:
     return {s for s in self.shifts if s[0,0]==0}
 
   @cached_property 
-  def W(self): # all shifts of V1+<v0> that give Z^n
+  def W_diag(self): # all shifts of V1+<v0> that give Z^n
     first_coord = min(s[0,0] for s in self.shifts if s[0,0]!=0)
     primitive_vector = [s for s in self.shifts if s[0,0]==first_coord][0]
     return [self.to_unit_cube(i*primitive_vector) for i in range(self.order(primitive_vector))]
+ 
+  @cached_property 
+  def W(self): # all shifts of V1+<v0> that give Z^n
+    return [self.from_diag(w) for w in self.W]
  
 
 class VinAl(Lattice):
