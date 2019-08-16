@@ -48,17 +48,11 @@ class Lattice:
     else:
       return product
   
-  def dot(self, a, b):
-    return self.dot_Q(a,b,self.Q)
+  def dot(self, a, b):      return self.dot_Q(a,b,self.Q)
+  def dot_diag(self, a, b): return self.dot_Q(a,b,self.Q_diag)
 
-  def dot_diag(self, a, b):
-    return self.dot_Q(a,b,self.Q_diag)
-
-  def to_diag(self, v):
-    return self.basis_diag_inverse * v
-
-  def from_diag(self, v):
-    return self.basis_diag * v
+  def to_diag(self, v):     return self.basis_diag_inverse * v
+  def from_diag(self, v):   return self.basis_diag * v
 
   def vectors(self, M):
     return [M.col(q) for q in range(M.cols)]
@@ -131,16 +125,19 @@ class VinAl(Lattice):
     '''
         Here we solve the equation (a+v1, a+v1) == k for a vector v1 in V1.
     '''
+    a = self.to_diag(a)
     q = [self.Q_diag[i,i] for i in range(1, self.n)]
-    c = k - self.Q_diag[0,0]*a[0]**2
-    for solution in squares_sum_solve(q, c, offset = a[1:]):
+    c = k - self.Q_diag[0,0]*a[0,0]**2
+    for solution in squares_sum_solve(q, c, offset = list(a)[1:]):
       yield self.from_diag( Matrix([0]+solution) + Matrix(a) ) # TODO: check correctness
 
+  def roots_with_shift(self, a, k): # TODO: we should first find roots for a given shift and then take all V1-shifts
+    pass
 
   @cached_property
   def roots_in_v0_perp(self): # possible lengths of roots
     #print([v for v in self.roots_of_type([0]*self.n, 2)])
-    return [v for k in self.root_lengths for v in self.roots_of_type([0]*self.n, k) if self.is_root(v)]
+    return [v for k in self.root_lengths for v in self.roots_of_type(zeros(self.n,1), k) if self.is_root(v)]
 
   def next_root(self):
     for a, k in self.root_types():
