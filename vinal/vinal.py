@@ -72,7 +72,7 @@ class Lattice:
     return functools.reduce( minkowski_sum, basis_multiples)
 
   @cached_property 
-  def shifts_in_V1(): # all shifts that lie in V1
+  def shifts_in_V1(self): # all shifts that lie in V1
     return {s for s in self.shifts if s[0,0]==0}
 
   @cached_property 
@@ -122,6 +122,9 @@ class VinAl(Lattice):
 
 
   def roots_of_type(self, a, k): #k is desired length squared, a is a non-V1 component
+    return [v for s in self.shifts_in_V1 for v in self.roots_with_shift(a+s, k)]
+
+  def roots_with_shift(self, a, k): # TODO: we should first find roots for a given shift and then take all V1-shifts
     '''
         Here we solve the equation (a+v1, a+v1) == k for a vector v1 in V1.
     '''
@@ -130,9 +133,6 @@ class VinAl(Lattice):
     c = k - self.Q_diag[0,0]*a[0,0]**2
     for solution in squares_sum_solve(q, c, offset = list(a)[1:]):
       yield self.from_diag( Matrix([0]+solution) + Matrix(a) ) # TODO: check correctness
-
-  def roots_with_shift(self, a, k): # TODO: we should first find roots for a given shift and then take all V1-shifts
-    pass
 
   @cached_property
   def roots_in_v0_perp(self): # possible lengths of roots

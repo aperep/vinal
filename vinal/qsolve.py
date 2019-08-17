@@ -6,7 +6,7 @@ def squares_sum_solve(q, c, offset = None):
   here we find integer solutions of q_1 x_1^2 + ... + q_n x_n^2 = c, where q_i and c are rational and positive 
   Input:
   q = [q_1, ... , q_n]
-  if offset is given, we look solution for a vector q + offset. Offset is rational.
+  if offset is given, we look solution for a vector x + offset. Offset is rational.
   '''
   # 
   n = len(q)
