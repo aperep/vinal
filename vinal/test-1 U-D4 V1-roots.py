@@ -3,7 +3,7 @@ from vinal import *
 D4 = Matrix([[2,-1,0,0],[-1,2,-1,-1],[0,-1,2,0],[0,-1,0,2]])
 U = Matrix([[0,1],[1,0]])
 V = VinAl(diag(U,D4))
-roots = [tuple(r) for r in V.roots_in_v0_perp]
+roots = [tuple(r) for r in V.roots_in_v0_perp()]
 v = (0, 0, -1, -1, 0, 0)
 print('roots in V1 are', roots)
 print(f'roots in V1 should include e.g. v = {v}')

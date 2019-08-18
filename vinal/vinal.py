@@ -18,7 +18,6 @@ class Lattice:
     '''
     self.Q = Matrix(Q) # quadratic form on the ambient space
     self.n = self.Q.rows # dimension of ambient space
-    self.basis = eye(self.n)
 
     if v0 == None:
       self.Q_diag, self.basis_diag  = rational_diagonal_form(self.Q)
@@ -36,24 +35,25 @@ class Lattice:
     
     assert self.dot(self.v0, self.v0) < 0
 
+  def basis(self, diag = False):
+    return self.basis_diag_inverse if diag else eye(self.n) 
+
   @cached_property
   def En(self): # higher ???, which is an upper bound of root length 
     adjoint_elements = [self.Q.cofactor(i,j) for i in range(self.n) for j in range(self.n)]
     return abs(self.Q.det()/gcd(adjoint_elements))
 
-  def dot_Q(self, a, b, Q):
+  def to_diag(self, v):     return self.basis_diag_inverse * v
+  def from_diag(self, v):   return self.basis_diag * v
+
+  def dot(self, a, b, diag = False):
+    Q = self.Q_diag if diag else self.Q
     product = (a.T*Q*b)
     if product.shape == (1, 1):
       return product[0,0]
     else:
       return product
   
-  def dot(self, a, b):      return self.dot_Q(a,b,self.Q)
-  def dot_diag(self, a, b): return self.dot_Q(a,b,self.Q_diag)
-
-  def to_diag(self, v):     return self.basis_diag_inverse * v
-  def from_diag(self, v):   return self.basis_diag * v
-
   def vectors(self, M):
     return [M.col(q) for q in range(M.cols)]
 
@@ -67,7 +67,7 @@ class Lattice:
   @cached_property 
   def shifts(self): # all shifts (in unit cube) of diagonal lattice that comprise the whole lattice
     multiples = lambda vector: {ImmutableMatrix(i*vector) for i in range(self.order(vector))}
-    basis_multiples = [multiples(v) for v in self.vectors(self.basis_diag_inverse)]
+    basis_multiples = [multiples(v) for v in self.vectors(self.basis(diag=True))]
     minkowski_sum = lambda s1,s2: {ImmutableMatrix(self.to_unit_cube(v1+v2)) for v1 in s1 for v2 in s2}
     return functools.reduce( minkowski_sum, basis_multiples)
 
@@ -81,70 +81,85 @@ class Lattice:
     primitive_vector = [s for s in self.shifts if s[0,0]==first_coord][0]
     return [self.to_unit_cube(i*primitive_vector) for i in range(self.order(primitive_vector))]
  
-  @cached_property 
-  def W(self): # all shifts of V1+<v0> that give Z^n
-    return [self.from_diag(w) for w in self.W_diag]
+  def W(self, diag = False): # all shifts of V1+<v0> that give Z^n
+    return self.W_diag if diag else [self.from_diag(w) for w in self.W_diag]
  
 
 class VinAl(Lattice):
+  '''
+  We always work in diagonal basis, except input and output
+  '''
   def __init__(self, Q, v0=None):
     super().__init__(Q,v0)
     self.roots = None
+    self.roots_diag = None
 
   @cached_property
   def root_lengths(self): # possible lengths of roots
     return [k for k in range(1,2*self.En+1) if ((2*self.En)%k == 0)]
 
-  def is_root(self, v):
-    v_length = self.dot(v,v)
+  def is_root(self, v, diag = False):
+    v_length = self.dot(v,v, diag=diag)
     assert v_length != 0
-    return all( 2*d % v_length == 0 for d in self.dot(v, self.basis) ) 
+    return all( 2*d % v_length == 0 for d in self.dot(v, self.basis(diag=diag), diag=diag) ) 
 
-  def is_new_root(self, v):
-    M = self.roots[:, :self.n-1].col_insert(0, v)
+  def is_new_root(self, v, diag = False):
+    roots = self.roots_diag if diag else self.roots
+    M = roots[:, :self.n-1].col_insert(0, v)
     if M.rank() < M.cols:
       return False
-    return self.is_root(v) and all( dot <= 0 for dot in self.dot(v,self.roots) )
+    return self.is_root(v, diag=diag) and all( dot <= 0 for dot in self.dot(v,roots, diag=diag) )
 
-  def root_types(self, stop=-1): # iterates pairs (a = w_i + c v_0, ||a||) from minimum, infinity or `stop` times
+  def root_types(self, diag = False, stop=-1): # iterates pairs (a = w_i + c v_0, ||a||) from minimum, infinity or `stop` times
     a_num = {k:1 for k in self.root_lengths} # each possible length k we store an index of a from series w_1, ..., v0, v0+w_1, ... 
+    W = self.W(diag=diag)
+    v0 = Matrix([1]+[0]*(n-1)) if diag else self.v0
     def a(k): # the non-V1 component of vector a for length k
       n = a_num[k]
-      m = len(self.W)
-      return self.W[n%m] + (n//m)*self.v0
+      m = len(W)
+      return W[n%m] + (n//m)*v0
     while True:
-      k = min(self.root_lengths, key=lambda k: -(self.v0.T*self.Q*a(k))[0,0]/math.sqrt(k)) 
+      k = min(self.root_lengths, key=lambda k: -self.dot(v0,a(k),diag=diag)/math.sqrt(k)) 
       yield a(k), k
       a_num[k]+=1
       stop-=1
       if stop == 0:
         return
 
+  def add_root(self, root, diag = False):
+    root_nondiag = self.from_diag(root) if diag else root
+    root_diag = root if diag else self.to_diag(root)
+    self.roots = self.roots.col_insert(self.roots.cols, root_nondiag)
+    self.roots_diag = self.roots.col_insert(self.roots.cols, root_diag)
 
-  def roots_of_type(self, a, k): #k is desired length squared, a is a non-V1 component
-    return [v for s in self.shifts_in_V1 for v in self.roots_with_shift(a+s, k)]
 
-  def roots_with_shift(self, a, k): # TODO: we should first find roots for a given shift and then take all V1-shifts
+  def roots_of_type(self, a, k, diag = False): #k is desired length squared, a is a non-V1 component
+    return [v if diag else self.from_diag(v) for s in self.shifts_in_V1 for v in self.roots_with_shift(a+s, k, diag=True)]
+
+  def roots_with_shift(self, a, k, diag = False): # TODO: we should first find roots for a given shift and then take all V1-shifts
     '''
         Here we solve the equation (a+v1, a+v1) == k for a vector v1 in V1.
-    '''
-    a = self.to_diag(a)
+    ''' 
+    if not diag:   
+      a = self.to_diag(a)
     q = [self.Q_diag[i,i] for i in range(1, self.n)]
     c = k - self.Q_diag[0,0]*a[0,0]**2
     for solution in squares_sum_solve(q, c, offset = list(a)[1:]):
-      yield self.from_diag( Matrix([0]+solution) + Matrix(a) ) # TODO: check correctness
+      result = Matrix([0]+solution) + Matrix(a)
+      yield result if diag else self.from_diag(result) # TODO: check correctness
 
-  @cached_property
-  def roots_in_v0_perp(self): # possible lengths of roots
-    #print([v for v in self.roots_of_type([0]*self.n, 2)])
-    return [v for k in self.root_lengths for v in self.roots_of_type(zeros(self.n,1), k) if self.is_root(v)]
+  @functools.lru_cache()
+  def roots_in_v0_perp(self, diag = False):
+    return [v for k in self.root_lengths 
+      for v in self.roots_of_type(zeros(self.n,1), k, diag=diag) 
+        if self.is_root(v, diag=diag)]
 
-  def next_root(self):
-    for a, k in self.root_types():
+  def next_root(self, diag = False):
+    for a, k in self.root_types(diag=diag):
       print('next_root: working with type ', a, k)#, -a.inner_product(s.v0)/math.sqrt(k))
-      new_roots = [v for v in self.roots_of_type(a, k) if self.is_new_root(v)]
+      new_roots = [v for v in self.roots_of_type(a, k, diag=diag) if self.is_new_root(v, diag=diag)]
       if len(new_roots)>0:
-        print('new root candidates', new_roots)
+        print(f'new root candidates {"in diagonal basis" if diag else ""}', new_roots)
         pass
       for root in new_roots:
         print('next_root: yielding root ', root)
@@ -153,9 +168,10 @@ class VinAl(Lattice):
 
   def run(self):
     self.roots = self.fundamental_cone() # roots are in diagonal coordinates !! 
+    self.roots_diag = self.to_diag(self.roots)
     if not self.finished():
       for root in self.next_root():
-        self.roots = self.roots.col_insert(self.roots.cols, root)
+        self.add_root(root, diag=False)
         print('roots found: {0}, they are:\n{1}'.format(self.roots.cols,self.roots))
         if self.finished():
           break
@@ -165,19 +181,21 @@ class VinAl(Lattice):
 
 
 
-  def fundamental_cone(self): 
+  def fundamental_cone(self, diag = False): 
     cone = Cone([[0]*self.n])
-    for root in self.roots_in_v0_perp:
+    for root in self.roots_in_v0_perp(diag=False):
       if cone.intersects(root):
         cone.append(root)
     print('FundCone constructed, roots: ',cone.rays)
-    return Matrix(list(cone.rays)).T
+    rays = Matrix(list(cone.rays)).T
+    return self.to_diag(rays) if diag else rays
 
 
-  def finished(self):
-    if len(self.roots)<2:
+  def finished(self, diag = False):
+    roots = self.roots_diag if diag else self.roots
+    if len(roots)<2:
       return False
-    M = self.dot(self.roots, self.roots)
+    M = self.dot(roots, roots, diag=diag)
     print('checking polyhedron with Gram matrix:\n',M)
     return coxiter.run(M.tolist(), self.n)
 
