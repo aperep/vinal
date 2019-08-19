@@ -77,8 +77,10 @@ class Lattice:
 
   @cached_property 
   def W_diag(self): # all shifts of V1+<v0> that give Z^n
-    first_coord = min(s[0,0] for s in self.shifts if s[0,0]!=0)
-    primitive_vector = [s for s in self.shifts if s[0,0]==first_coord][0]
+    first_coords = [s[0,0] for s in self.shifts if s[0,0]!=0]
+    if len(first_coords)==0:
+      return [zeros(self.n,1)]
+    primitive_vector = [s for s in self.shifts if s[0,0]==min(first_coords)][0]
     return [self.to_unit_cube(i*primitive_vector) for i in range(self.order(primitive_vector))]
  
   def W(self, diag = False): # all shifts of V1+<v0> that give Z^n
