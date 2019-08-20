@@ -156,8 +156,8 @@ class VinAl(Lattice):
       for v in self.roots_of_type(zeros(self.n,1), k, diag=diag) 
         if self.is_root(v, diag=diag)]
 
-  def next_root(self, diag = False):
-    for a, k in self.root_types(diag=diag):
+  def next_root(self, diag = False,  stop = -1):
+    for a, k in self.root_types(diag=diag, stop=stop):
       print('next_root: working with type ', a, k)#, -a.inner_product(s.v0)/math.sqrt(k))
       new_roots = [v for v in self.roots_of_type(a, k, diag=diag) if self.is_new_root(v, diag=diag)]
       if len(new_roots)>0:
@@ -168,11 +168,11 @@ class VinAl(Lattice):
         yield root # what exactly we want to do here?
 
 
-  def run(self):
+  def run(self, stop = -1):
     self.roots = self.fundamental_cone() # roots are in diagonal coordinates !! 
     self.roots_diag = self.to_diag(self.roots)
     if not self.finished():
-      for root in self.next_root():
+      for root in self.next_root(stop=stop):
         self.add_root(root, diag=False)
         print('roots found: {0}, they are:\n{1}'.format(self.roots.cols,self.roots))
         if self.finished():
