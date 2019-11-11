@@ -10,7 +10,7 @@ from qsolve import squares_sum_solve
 import coxiter
 
 class Lattice: 
-  def __init__(self, Q, v0=None, d=None):
+  def __init__(self, Q, v0=None):
     '''
     here we establish necessary coordinate systems
     Q - integer-valued quadratic form on Z^n in a form of an array of arrays of integers
@@ -198,7 +198,6 @@ class VinAl(Lattice):
     if len(roots)<2:
       return False
     M = self.dot(roots, roots, diag=diag)
-    
     print('checking polyhedron with Gram matrix:\n',M)
     return coxiter.run(M.tolist(), self.n)
 
