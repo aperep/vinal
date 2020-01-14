@@ -10,7 +10,7 @@ from qsolve import squares_sum_solve
 import coxiter
 
 class Lattice: 
-  def __init__(self, Q, v0=None):
+  def __init__(self, Q, v0=None, d=None):
     '''
     here we establish necessary coordinate systems
     Q - integer-valued quadratic form on Z^n in a form of an array of arrays of integers
@@ -61,7 +61,11 @@ class Lattice:
     return vector.applyfunc(lambda x: x%1)
   
   def order(self, vector):
-    denominators = [x.q for x in tuple(vector)]
+    '''
+    vector is an element of lattice (in diagonal coordinates?)
+    Returns order of vector image in the quotient lattice
+    '''
+    denominators = [int(x) for x in tuple(vector)]
     return functools.reduce(lambda x,y:x*y//math.gcd(x,y),denominators)
 
   @cached_property 
@@ -198,6 +202,7 @@ class VinAl(Lattice):
     if len(roots)<2:
       return False
     M = self.dot(roots, roots, diag=diag)
+    
     print('checking polyhedron with Gram matrix:\n',M)
     return coxiter.run(M.tolist(), self.n)
 

@@ -61,7 +61,11 @@ class Lattice:
     return vector.applyfunc(lambda x: x%1)
   
   def order(self, vector):
-    denominators = [x.q for x in tuple(vector)]
+    '''
+    vector is an element of lattice (in diagonal coordinates?)
+    Returns order of vector image in the quotient lattice
+    '''
+    denominators = [int(x) for x in tuple(vector)]
     return functools.reduce(lambda x,y:x*y//math.gcd(x,y),denominators)
 
   @cached_property 
