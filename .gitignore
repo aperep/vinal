@@ -4,3 +4,4 @@
 .vscode
 *.code-workspace
 */__pycache__/*
+.ipynb_checkpoints
