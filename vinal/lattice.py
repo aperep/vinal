@@ -42,14 +42,14 @@ class Lattice:
 
   def to_diag(self, v):     return self.basis_diag_inverse * v
   def from_diag(self, v):   return self.basis_diag * v
+  
+  def dot_matrix(self, a, b, diag = False):
+    Q = self.Q_diag if diag else self.Q
+    return (a.T*Q*b)
 
   def dot(self, a, b, diag = False):
-    Q = self.Q_diag if diag else self.Q
-    product = (a.T*Q*b)
-    if product.shape == (1, 1):
-      return product[0,0]
-    else:
-      return product
+    product = self.dot_matrix(a,b,diag=diag)
+    return product[0,0] if product.shape == (1, 1) else product
   
   def vectors(self, M):
     return [M.col(q) for q in range(M.cols)]
@@ -62,7 +62,8 @@ class Lattice:
     vector is an element of lattice (in diagonal coordinates?)
     Returns order of vector image in the quotient lattice
     '''
-    denominators = [int(x) for x in tuple(vector)]
+    denominators = [Rational(x).q for x in tuple(vector)]
+    print(vector)
     return functools.reduce(lambda x,y:x*y//math.gcd(x,y),denominators)
 
   @cached_property 

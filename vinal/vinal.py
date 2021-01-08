@@ -11,15 +11,20 @@ from cone import Cone
 from qsolve import squares_sum_solve
 import coxiter
  
-
 class VinAl(Lattice):
   '''
   We always work in diagonal basis, except input and output
   '''
-  def __init__(self, Q, v0=None):
+  def __init__(self, Q, v0=None, blocks = 'sympy'):
     super().__init__(Q,v0)
     self.roots = None
     self.roots_diag = None
+    if blocks == 'sage':
+      import blocks_sage_original as blocks
+      # substituting methods as in https://stackoverflow.com/a/2982/7626757 (may use types.MethodType as well)
+      self.roots_of_type = blocks.Roots_decomposed_into.__get__(self) 
+      self.root_types = blocks.IterateRootDecompositions.__get__(self)
+      self.fundamental_cone = blocks.FundCone.__get__(self)
 
   @cached_property
   def root_lengths(self): # possible lengths of roots
@@ -31,11 +36,13 @@ class VinAl(Lattice):
     return all( 2*d % v_length == 0 for d in self.dot(v, self.basis(diag=diag), diag=diag) ) 
 
   def is_new_root(self, v, diag = False):
+    if not self.is_root(v, diag=diag):
+      return False
     roots = self.roots_diag if diag else self.roots
     M = roots[:, :self.n-1].col_insert(0, v)
     if M.rank() < M.cols:
       return False
-    return self.is_root(v, diag=diag) and all( dot <= 0 for dot in self.dot(v,roots, diag=diag) )
+    return all( dot <= 0 for dot in self.dot_matrix(v,roots, diag=diag) )
 
   def root_types(self, diag = False, stop=-1): # iterates pairs (a = w_i + c v_0, ||a||) from minimum, infinity or `stop` times
     a_num = {k:1 for k in self.root_lengths} # each possible length k we store an index of a from series w_1, ..., v0, v0+w_1, ... 
@@ -83,7 +90,7 @@ class VinAl(Lattice):
 
   def next_root(self, diag = False,  stop = -1):
     for a, k in self.root_types(diag=diag, stop=stop):
-      print('next_root: working with type ', a, k)#, -a.inner_product(s.v0)/math.sqrt(k))
+      print(f'next_root: working with type a={a}, k={k} ', a, k)#, -a.inner_product(s.v0)/math.sqrt(k))
       new_roots = [v for v in self.roots_of_type(a, k, diag=diag) if self.is_new_root(v, diag=diag)]
       if len(new_roots)>0:
         print(f'new root candidates {"in diagonal basis" if diag else ""}', new_roots)
@@ -120,7 +127,7 @@ class VinAl(Lattice):
 
   def finished(self, diag = False):
     roots = self.roots_diag if diag else self.roots
-    if len(roots)<2:
+    if roots.cols<2:
       return False
     M = self.dot(roots, roots, diag=diag)
     
