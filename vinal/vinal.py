@@ -1,3 +1,5 @@
+#!/usr/bin/env sage -python
+
 from sympy import *
 from cached_property import cached_property
 import math
