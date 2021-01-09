@@ -101,7 +101,7 @@ class VinAl(Lattice):
 
 
   def run(self, stop = -1):
-    self.roots = self.fundamental_cone() # roots are in diagonal coordinates !! 
+    self.roots = self.fundamental_cone() # roots are in diagonal coordinates ?
     self.roots_diag = self.to_diag(self.roots)
     if not self.finished():
       for root in self.next_root(stop=stop):
