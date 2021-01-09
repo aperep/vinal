@@ -1,0 +1,25 @@
+lattices:
+  - U: 
+      - [0,1]
+      - [1,0]
+    En: 1
+  - blocks: [U, A(3)]
+    En: 4
+    root_example: [0, 0, -1, 2, -1]
+    root_length: 4 
+  - blocks: [U, E(6)]
+    En: 3
+    root_example: [-1, 0, 1, 2, 3, 2, 2, 1]
+    root_length: 2 
+  - blocks: [U, E(7)]
+    En: 2
+    root_example: [-1, 0, 2, 3, 4, 2, 3, 2, 1]
+    root_length: 2 
+  - blocks: [U, D(4)]
+    En: 2
+    root_example: [0, 0, 1, 0, -1, 0]
+    root_length: 4 
+  - blocks: [7*U, D(4)]
+    En: 14
+    root_example: [-10, 4, 14, 28, 21, 21]
+    root_length: 28 

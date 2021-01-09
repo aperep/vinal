@@ -1,0 +1,19 @@
+Вызываем `V=VinAl(матрица)`
+В `__init__` инициализируется родительский класс `Lattice` через `rational_diagonal_form` (откуда же берётся `v0`) и в нём ищется `W`.
+ 
+Ищем корни - `V.run()`
+Первичный список корней получается из `fundamental_cone`.
+Корни итерируются по генератору `next_root`, остановка проверяется с помощью `finished`.
+
+В `fundamental_cone` берутся корни (отвечающие нулевой компоненте вне V1) из `roots_in_v0_perp`.
+Эти корни добавляются по одному, и на каждом шаге происходит усечение конуса.
+В `roots_in_v0_perp` используется `roots_of_type`.
+
+`roots_of_type` использует `shifts_in_V1` и `roots_with_shift` и возвращает список корней данного типа.
+`roots_with_shift` использует `squares_sum_solve`.
+
+В `next_root` итерируются типы по `root_types` и для каждого берутся корни этого типа из `roots_of_type` с проверкой `is_new_root`.
+
+В `add_root`, `root_types`, `is_root`, `is_new_root` ничего внешнего не используется.
+
+`finished` - обёртка для `coxIter`

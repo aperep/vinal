@@ -1,3 +1,7 @@
 *.sage.py
 *.pyc
 .DS_Store
+.vscode
+*.code-workspace
+*/__pycache__/*
+.ipynb_checkpoints

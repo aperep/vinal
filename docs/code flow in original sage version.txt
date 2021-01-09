@@ -1,0 +1,17 @@
+Вызываем `A=VinAl(matrix(...))`. 
+В `__init__` для поиска `v0` вызывается `NegativeVector`, а для `W` --- `GetIntegerPoints`.
+
+Вызываем `A.FindRoots()`.
+Первичный список корней получается из `FundCone`.
+Корни итерируются по генератору `NextRoot`, остановка проверяется с помощью `is_FundPoly`.
+
+В `FundCone` берутся корни (отвечающие нулевой компоненте вне V1) из `Roots_decomposed_into` и проверяются по `IsRoot`.
+Эти корни добавляются по одному, и на каждом шаге происходит усечение конуса.
+
+`Roots_decomposed_into` использует `qsolve` и возвращает список корней данного типа.
+
+В `NextRoot` итерируются типы по `IterateRootDecompositions` и для каждого берутся корни этого типа из `Roots_decomposed_into` с проверкой `IsNewRoot`.
+
+В `IterateRootDecompositions`, `IsRoot`, `IsNewRoot` ничего внешнего не используется.
+Проверка `is_FundPoly` - оболочка для `CoxIter`.
+

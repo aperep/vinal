@@ -1,22 +1,8 @@
 #import numba
 import numpy as np
 import itertools
-import time
 import math
 import scipy.sparse.linalg as linalg
-
-def timeit(f): # @timeit
-    
-    def timed(*args, **kw):
-        
-        ts = time.time()
-        result = f(*args, **kw)
-        te = time.time()
-        
-        print 'func:%r args:[%r, %r] took: %2.4f sec' % \
-            (f.__name__, args, kw, te-ts)
-        return result
-    return timed
 
 '''
 This module solves a general quadratic diophantine equation in n variables x=(x_1,..,x_n) in the form 
@@ -26,7 +12,7 @@ where M2 is a positive definite matrix.
 
 def qform_minimum(A, m1):
   b=-.5*m1
-  x = linalg.cg(A,b)[0]
+  x = linalg.cg(A,b,atol=0)[0]
   return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
 
 
@@ -63,19 +49,16 @@ def qsolve_iterative(m2, m1, c):
         sols=[]
         sols_a = []
         while sols_a!=None:
-          #print 'trying a=',a
           sols_a = qsolve_iterative(M2(a), M1(a), C(a))
           if sols_a==None:
             break
           sols+=[s + [a,] for s in sols_a]
-          #print 'solutions', sols_a
           a+=direction
         return sols
     
     sols=oneside(math.floor(x[n-1]),-1)+oneside(math.floor(x[n-1])+1,1)
     return sols
 
-#@timeit
 def qsolve(m2, m1, c):
     s = qsolve_iterative(np.array(m2), np.array(m1).reshape(-1), c)
     return s
@@ -88,5 +71,5 @@ if __name__ == "__main__":
              ([[3,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], [0,0,0,0], -9, 10),
     ]
     for m2, m1, c, b in tests:
-        print(timeit(qsolve)(m2, m1, c))
+        print(qsolve(m2, m1, c))
     qform_minimum(np.array([[ 2, -1],[-1, 2]]), np.array([ 0, 128]))
