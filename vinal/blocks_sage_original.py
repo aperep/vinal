@@ -1,9 +1,9 @@
 from sage.all import *
 import qsolve_sage as qsolve
-import numpy as np
+import sympy as sp
 
 def fundamental_cone(s, diag=False):
-        V1_roots = [v for k in s.root_lengths for v in s.roots_of_type(zero_vector(s.n), k) if s.is_root(v)]
+        V1_roots = [vector([int(i) for i in list(v.T)]) for k in s.root_lengths for v in s.roots_of_type(zero_vector(s.n), k) if s.is_root(v)]
         print('roots in V1: {}'.format(V1_roots))
         cone = Cone([[0]*s.n]).dual()
         #print('cone', cone.rays())
@@ -15,8 +15,7 @@ def fundamental_cone(s, diag=False):
             else:
                 cone = cone.intersection(Cone([-root]).dual())
         #print('cone', cone.rays())
-        print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
-        return [s.V(r) for r in cone.dual().rays()]
+        return sp.Matrix([r for r in cone.dual().rays()]).T
 
                 
 def roots_of_type(s, a, k, diag=False): #k is desired inner square, a is a non-V1 component
@@ -27,16 +26,19 @@ def roots_of_type(s, a, k, diag=False): #k is desired inner square, a is a non-V
         or, introducing m1, m2, c:
         ( 2 m1 + x^t m2 ) x == c.
         '''
+        
         if diag == True:
           raise NotImplementedError
         g = s.V1_basis_diag.T
-        m2 = np.dot( np.dot(g, s.Q), g.transpose())
-        m1 = np.dot( np.dot( Matrix(a), s.Q), g.transpose() )
+        print(f'shapes g {g.shape} s.Q {s.Q.shape}')
+        m2 = g * s.Q * g.transpose()
+        m1 = sp.Matrix(a).T * s.Q * g.transpose()
         c = int(k - a.inner_product(a))
         solutions = qsolve.qsolve(m2, int(2)*m1, -c)
+        print('solutions',solutions)
         def V1_vector(x):
-            return sum(x[i]*g[i] for i in range(s.n-1))
-        return [V1_vector(x)+a for x in solutions]
+            return sp.Matrix(x).T * g
+        return [V1_vector(x).T+sp.Matrix(a) for x in solutions]
 
         
 def root_types(s, stop=-1): # iterates pairs (w_i + c v_0, ||a||) from minimum, infinity or `stop` times

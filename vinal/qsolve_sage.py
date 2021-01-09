@@ -12,7 +12,7 @@ where M2 is a positive definite matrix.
 
 def qform_minimum(A, m1):
   b=-.5*m1
-  x = linalg.cg(A,b)[0]
+  x = linalg.cg(A,b,atol=0)[0]
   return x, np.dot(x,np.dot(A,x))+np.dot(m1,x)
 
 
