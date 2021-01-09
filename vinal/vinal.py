@@ -22,9 +22,9 @@ class VinAl(Lattice):
     if blocks == 'sage':
       import blocks_sage_original as blocks
       # substituting methods as in https://stackoverflow.com/a/2982/7626757 (may use types.MethodType as well)
-      self.roots_of_type = blocks.Roots_decomposed_into.__get__(self) 
-      self.root_types = blocks.IterateRootDecompositions.__get__(self)
-      self.fundamental_cone = blocks.FundCone.__get__(self)
+      self.roots_of_type = blocks.roots_of_type.__get__(self) 
+      self.root_types = blocks.root_types.__get__(self)
+      self.fundamental_cone = blocks.fundamental_cone.__get__(self)
 
   @cached_property
   def root_lengths(self): # possible lengths of roots
