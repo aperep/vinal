@@ -1,4 +1,4 @@
-This project is a work-in-progress Python3 module that provides a realization of [Vinberg's algorithm](https://en.wikipedia.org/wiki/Vinberg%27s_algorithm) of searching a fundamental polytope of an arythmetic group. The previous Sage version is described in the article [Vinberg's Algorithm for Hyperbolic Lattices](http://www.mathnet.ru/php/archive.phtml?wshow=paper&jrnid=mzm&paperid=11889&option_lang=eng).
+This project **VinAl** is a work-in-progress Python3 module that provides a realization of [Vinberg's algorithm](https://en.wikipedia.org/wiki/Vinberg%27s_algorithm) of searching a fundamental polytope of an arythmetic group. The previous Sage version is described in the article [Vinberg's Algorithm for Hyperbolic Lattices](http://www.mathnet.ru/php/archive.phtml?wshow=paper&jrnid=mzm&paperid=11889&option_lang=eng).
 
 ## Status
 Some parts may work not as intended or not work at all. 
