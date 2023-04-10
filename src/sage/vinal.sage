@@ -1,4 +1,4 @@
-from sage.rings.integer import GCD_list
+  from sage.rings.integer import GCD_list
 from sage.geometry.polyhedron.constructor import Polyhedron
 import itertools
 from sage.geometry.polyhedron.ppl_lattice_polytope import LatticePolytope_PPL
@@ -47,7 +47,7 @@ def NegativeVector(V):
 
             
 class VinAl:
-    def __init__(s, M, v0=None):
+    def __init__(s, M, v0=None, use_coxiter=False):
         s.M = M
         s.n = s.M.ncols()  # n-1 = dimension of hyperbolic space
         s.V = FreeModule(ZZ,s.n, inner_product_matrix=s.M) # created a quadratic lattice
@@ -71,6 +71,8 @@ class VinAl:
         s.check_validity()
         s.roots = []
         print("Vinberg algorithm initialized for matrix \n{}\n".format(M))
+        print(latex(M))
+
 
     def Print(s): # change to __str__ and/or __repr__
         print("W:")
@@ -99,21 +101,47 @@ class VinAl:
     def is_FundPoly(s):
             if len(s.roots)<1:
                 return False
-            M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
-            print('checking polyhedron with Gram matrix')
-            print(matrix(M))
-            return coxiter.run(M, s.n)
+            if use_coxiter == True:
+                M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
+                print('checking polyhedron with Gram matrix')
+                print(matrix(M))
+                return coxiter.run(M, s.n)
+            polycone=[matrix(s.M.inverse()*a) for a in Cone(s.roots).dual().rays()]
+            return all(q*s.M*q.transpose()<=0 for q in polycone)
     
     @timeit
     def FindRoots(s):
         s.roots = s.FundCone()
         for root in s.NextRoot():
             s.roots.append(root)
-            print('roots found: {0}, they are:\n{1}'.format(len(s.roots),s.roots))
+            #print('roots found: {0}, they are:\n{1}'.format(len(s.roots),s.roots))
             if s.is_FundPoly():
-                print('Fundamental Polyhedron constructed, roots:')
-                print(s.roots)
+                s.print_roots()
                 return
+
+    def print_roots(s):
+        polycone=[matrix(s.M.inverse()*a) for a in Cone(s.roots).dual().rays()]
+        vid = len([q for q in polycone if q*s.M*q.transpose()==0])
+        #print('vid =', vid)
+        v_fin = len([q for q in polycone if q*s.M*q.transpose()<0])
+        o=len(s.roots)
+        print('V_fin =', v_fin)
+        print('       ')
+        print('Fundamental Coxeter polyhedron with', o, 'facets,', v_fin, 'finite and', vid, 'ideal vertices is constructed; and its roots are:')
+        print('       ')
+        
+        for z in range(o):
+            print("e",end='')
+            print(z+1,'=',s.roots[z])
+        #print(s.roots)
+        print('       ')
+        print('Ideal vertices are:')
+        print('       ')
+        for p in range(vid):
+            print([q for q in polycone if q*s.M*q.transpose()==0][p])
+        print('       ')
+        print(latex(s.roots))
+
 
     def FundCone(s):
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
@@ -129,6 +157,7 @@ class VinAl:
                 cone = cone.intersection(Cone([-root]).dual())
         #print('cone', cone.rays())
         print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
+        print(latex([s.V(r) for r in cone.dual().rays()]))
         return [s.V(r) for r in cone.dual().rays()]
     
         
@@ -171,15 +200,32 @@ class VinAl:
             print 'new root candidates', new_roots
         for root in new_roots:
             yield root
-            
 
-# M is an inner product (quadratic form), v0 is a chosen vector
-#M = diagonal_matrix(ZZ,[-60,1,1,1])
-M = matrix([[-10,0,0,0],[0,2,-1,0],[0,-1,2,0],[0,0,0,1]])
-#M = diagonal_matrix(ZZ,[-3,5,1,1])
-#M = diagonal_matrix(ZZ,[-1,3,3,2])
-M = matrix([[-7,0,0,0],[0,2,-1,0],[0,-1,2,-1],[0,0,-1,2]])
-#v0 = [1,0,0,0]
-print('initializing a VinAl instance at a variable "A"\n')
-A = VinAl(M)
-A.FindRoots()
+
+
+if __name__ == "__main__":
+    t0 = time.time()            
+
+    # M is an inner product (quadratic form), v0 is a chosen vector
+
+    U = matrix([[0,1],[1,0]]) # a standard hyperbolic 2-dim lattice
+
+    D4 = matrix([[2,-1,0,0],[-1,2,-1,-1],[0,-1,2,0],[0,-1,0,2]]) # D4 lattice
+
+
+    # M = diagonal_matrix(ZZ,[-15,1,1,1])
+    # M = matrix([[-1,0,0,0],[0,2,-1,0],[0,-1,2,-1],[0,0,-1,2]])
+    # M = matrix([[0,1,0,0],[1,0,0,0],[0,0,1,0],[0,0,0,1]])
+    # M = diagonal_matrix(ZZ,[-3,5,1,1])
+    # M = diagonal_matrix(ZZ,[-1,3,3,2])
+    # M = block_diagonal_matrix(matrix([-1]),D4,D4,D4)
+    # M = matrix([[-30,0,0,0],[0,1,0,0],[0,0,2,1],[0,0,1,2]])
+
+    # M = block_diagonal_matrix(matrix([-1]),D4)
+
+    M = block_diagonal_matrix(U,D4)
+
+    print('initializing a VinAl instance at a variable "A"\n')
+    A = VinAl(M)
+    A.FindRoots()
+    print('time_final =', time.time() - t0)

@@ -18,7 +18,7 @@ sage -python -m easy_install line_profiler
 1. Start the SageMath interactive shell `sage`.
 2. Attach the project
 ```
-sage: attach('vinberg-algorithm.sage')
+sage: attach('vinal.sage')
 ```
 3. Create the Vinberg Algorithm instance from a square integer matrix M: 
 ```
