@@ -1,0 +1,16 @@
+{
+    "name": "Sage",
+    "image": "sagemath/sagemath:latest",
+    "onCreateCommand": "sage --pip install tqdm",
+  "customizations": {		
+		"vscode": {
+			"settings": { 
+        "python.defaultInterpreterPath": "sage -python"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ]  
+    }
+  }
+}

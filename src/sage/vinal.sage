@@ -1,4 +1,4 @@
-  from sage.rings.integer import GCD_list
+from sage.rings.integer import GCD_list
 from sage.geometry.polyhedron.constructor import Polyhedron
 import itertools
 from sage.geometry.polyhedron.ppl_lattice_polytope import LatticePolytope_PPL
@@ -110,7 +110,7 @@ class VinAl:
             polycone=[matrix(s.M.inverse()*a) for a in Cone(s.roots).dual().rays()]
             return all(q*s.M*q.transpose()<=0 for q in polycone)
     
-    @timeit
+    #@timeit
     def FindRoots(s):
         s.roots = s.FundCone()
         for root in s.NextRoot():
@@ -198,14 +198,14 @@ class VinAl:
           #print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
         new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
-            print 'new root candidates', new_roots
+            print('new root candidates', new_roots)
         for root in new_roots:
             yield root
 
 
 
 if __name__ == "__main__":
-    t0 = time.time()            
+    #t0 = time.time()            
 
     # M is an inner product (quadratic form), v0 is a chosen vector
 
@@ -229,4 +229,4 @@ if __name__ == "__main__":
     print('initializing a VinAl instance at a variable "A"\n')
     A = VinAl(M)
     A.FindRoots()
-    print('time_final =', time.time() - t0)
+    #print('time_final =', time.time() - t0)
