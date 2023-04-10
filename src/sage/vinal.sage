@@ -48,6 +48,7 @@ def NegativeVector(V):
             
 class VinAl:
     def __init__(s, M, v0=None, use_coxiter=False):
+        s.use_coxiter = use_coxiter
         s.M = M
         s.n = s.M.ncols()  # n-1 = dimension of hyperbolic space
         s.V = FreeModule(ZZ,s.n, inner_product_matrix=s.M) # created a quadratic lattice
@@ -101,7 +102,7 @@ class VinAl:
     def is_FundPoly(s):
             if len(s.roots)<1:
                 return False
-            if use_coxiter == True:
+            if s.use_coxiter == True:
                 M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
                 print('checking polyhedron with Gram matrix')
                 print(matrix(M))
