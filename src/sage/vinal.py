@@ -1,18 +1,9 @@
+from sage.all_cmdline import *   # import sage library
+
 from sage.rings.integer import GCD_list
-from sage.geometry.polyhedron.constructor import Polyhedron
 import itertools
-from sage.geometry.polyhedron.ppl_lattice_polytope import LatticePolytope_PPL
 import numpy as np
-from pprint import pprint
-#from heapq import heapify, heappush, heappop
 
-from sage.quadratic_forms.qfsolve import qfsolve, qfparam
-#from sympy.solvers.diophantine import *
-#import sympy
-
-
-#local imports:
-#from profiling_decorators import *
 import qsolve
 import coxiter
 
@@ -230,3 +221,4 @@ if __name__ == "__main__":
     A = VinAl(M)
     A.FindRoots()
     #print('time_final =', time.time() - t0)
+
