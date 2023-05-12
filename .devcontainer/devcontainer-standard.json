@@ -1,0 +1,15 @@
+{
+  "name": "Sage",
+  "image": "sagemath/sagemath:latest",
+  "customizations": {		
+		"vscode": {
+			"settings": { 
+        "python.defaultInterpreterPath": "sage -python"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ]  
+    }
+  }
+}

@@ -5,3 +5,4 @@
 *.code-workspace
 */__pycache__/*
 .ipynb_checkpoints
+.devcontainer/devcontainer.json
