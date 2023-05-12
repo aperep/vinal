@@ -3,6 +3,7 @@ from sage.all_cmdline import *   # import sage library
 from sage.rings.integer import GCD_list
 import itertools
 import numpy as np
+import sys
 
 import qsolve
 import coxiter
@@ -38,7 +39,8 @@ def NegativeVector(V):
 
             
 class VinAl:
-    def __init__(s, M, v0=None, use_coxiter=False):
+    def __init__(s, M, v0=None, use_coxiter=False, output=sys.stdout):
+        s.output = output
         s.use_coxiter = use_coxiter
         s.M = M
         s.n = s.M.ncols()  # n-1 = dimension of hyperbolic space
@@ -62,16 +64,21 @@ class VinAl:
         #print([v0.inner_product(w) for w in W])
         s.check_validity()
         s.roots = []
-        print("Vinberg algorithm initialized for matrix \n{}\n".format(M))
-        print(latex(M))
+        s._print("Vinberg algorithm initialized for matrix \n{}\n".format(M))
+        s._print(latex(M))
 
+
+    def _print(self, *args, **kwargs) -> None:
+        if self.output == None:
+            return
+        print(*args, **kwargs, file=self.output)
 
     def Print(s): # change to __str__ and/or __repr__
-        print("W:")
-        print(s.W)
-        print("V1:")
-        print(s.V1.vector_space())
-        print(s.V1.gram_matrix())
+        s._print("W:")
+        s._print(s.W)
+        s._print("V1:")
+        s._print(s.V1.vector_space())
+        s._print(s.V1.gram_matrix())
         
     def check_validity(s):
         assert s.M.is_square()
@@ -95,8 +102,8 @@ class VinAl:
                 return False
             if s.use_coxiter == True:
                 M = [[ t.inner_product(r) for t in s.roots] for r in s.roots]
-                print('checking polyhedron with Gram matrix')
-                print(matrix(M))
+                s._print('checking polyhedron with Gram matrix')
+                s._print(matrix(M))
                 return coxiter.run(M, s.n)
             polycone=[matrix(s.M.inverse()*a) for a in Cone(s.roots).dual().rays()]
             return all(q*s.M*q.transpose()<=0 for q in polycone)
@@ -117,27 +124,27 @@ class VinAl:
         #print('vid =', vid)
         v_fin = len([q for q in polycone if q*s.M*q.transpose()<0])
         o=len(s.roots)
-        print('V_fin =', v_fin)
-        print('       ')
-        print('Fundamental Coxeter polyhedron with', o, 'facets,', v_fin, 'finite and', vid, 'ideal vertices is constructed; and its roots are:')
-        print('       ')
+        s._print('V_fin =', v_fin)
+        s._print('       ')
+        s._print('Fundamental Coxeter polyhedron with', o, 'facets,', v_fin, 'finite and', vid, 'ideal vertices is constructed; and its roots are:')
+        s._print('       ')
         
         for z in range(o):
-            print("e",end='')
-            print(z+1,'=',s.roots[z])
+            s._print("e",end='')
+            s._print(z+1,'=',s.roots[z])
         #print(s.roots)
-        print('       ')
-        print('Ideal vertices are:')
-        print('       ')
+        s._print('       ')
+        s._print('Ideal vertices are:')
+        s._print('       ')
         for p in range(vid):
-            print([q for q in polycone if q*s.M*q.transpose()==0][p])
-        print('       ')
-        print(latex(s.roots))
+            s._print([q for q in polycone if q*s.M*q.transpose()==0][p])
+        s._print('       ')
+        s._print(latex(s.roots))
 
 
     def FundCone(s):
         V1_roots = [v for k in s.root_lengths for v in s.Roots_decomposed_into(s.V([0]*s.n), k) if s.IsRoot(v)]
-        print('roots in V1: {}'.format(V1_roots))
+        s._print('roots in V1: {}'.format(V1_roots))
         cone = Cone([[0]*s.n]).dual()
         #print('cone', cone.rays())
         for root in V1_roots:
@@ -148,8 +155,8 @@ class VinAl:
             else:
                 cone = cone.intersection(Cone([-root]).dual())
         #print('cone', cone.rays())
-        print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
-        print(latex([s.V(r) for r in cone.dual().rays()]))
+        s._print('FundCone returned',[s.V(r) for r in cone.dual().rays()])
+        s._print(latex([s.V(r) for r in cone.dual().rays()]))
         return [s.V(r) for r in cone.dual().rays()]
     
         
@@ -189,7 +196,7 @@ class VinAl:
           #print(a, k, -a.inner_product(s.v0)/math.sqrt(k))
         new_roots = [v for v in s.Roots_decomposed_into(a, k) if s.IsNewRoot(v)]
         if len(new_roots)>0:
-            print('new root candidates', new_roots)
+            s._print('new root candidates', new_roots)
         for root in new_roots:
             yield root
 
